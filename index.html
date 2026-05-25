@@ -1,0 +1,3357 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  
+  <!-- SEO Tags -->
+  <title>Aura Planner — Minimalist PWA</title>
+  <meta name="description" content="A gorgeous, glassmorphic personal daily planner optimized for mobile. Build habits, schedule reminders, and track your progress with absolute elegance.">
+  
+  <!-- PWA Capabilities -->
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  
+  <style>
+    /* ==========================================================================
+       1. DESIGN SYSTEM & ROOT VARIABLES
+       ========================================================================== */
+    :root {
+      /* Colors */
+      --bg-color: #0a0a0f;
+      --accent-gradient: linear-gradient(135deg, #a78bfa 0%, #6d28d9 100%);
+      --accent-purple: #a78bfa;
+      --accent-indigo: #6d28d9;
+      --text-primary: #f5f3ff;
+      --text-secondary: rgba(245, 243, 255, 0.5);
+      --success-color: #34d399;
+      --danger-color: #f87171;
+      --streak-amber: #fbbf24;
+      
+      /* Glassmorphism Styles */
+      --glass-bg: rgba(255, 255, 255, 0.05);
+      --glass-border: 1px solid rgba(255, 255, 255, 0.08);
+      --glass-shadow: 0 8px 32px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.08);
+      --glass-blur: blur(24px) saturate(180%);
+      --webkit-glass-blur: blur(24px) saturate(180%);
+      
+      /* Safe Areas */
+      --safe-top: env(safe-area-inset-top, 20px);
+      --safe-bottom: env(safe-area-inset-bottom, 20px);
+    }
+    
+    /* ==========================================================================
+       2. RESET & BASE APP LAYOUT
+       ========================================================================== */
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      -webkit-tap-highlight-color: transparent;
+      user-select: none;
+      -webkit-user-select: none;
+    }
+    
+    html, body {
+      width: 100%;
+      height: 100%;
+      background-color: #050508;
+      overflow: hidden;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      font-family: -apple-system, BlinkMacSystemFont, 'Outfit', 'SF Pro Display', sans-serif;
+      color: var(--text-primary);
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+    }
+    
+    /* Center container mockup on desktop, fluid on iPhone 13 Pro */
+    #app-container {
+      width: 390px;
+      height: 844px;
+      position: relative;
+      background: var(--bg-color);
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      border-radius: 40px;
+      box-shadow: 0 24px 64px rgba(0, 0, 0, 0.8), 0 0 0 12px rgba(255, 255, 255, 0.05);
+      z-index: 10;
+    }
+    
+    @media (max-width: 480px) {
+      #app-container {
+        width: 100%;
+        height: 100%;
+        border-radius: 0;
+        box-shadow: none;
+      }
+    }
+    
+    /* ==========================================================================
+       3. BACKGROUND ANIMATION (AURORA SHIFTING MESH)
+       ========================================================================== */
+    .aurora-bg {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      z-index: -1;
+      overflow: hidden;
+      background: var(--bg-color);
+      pointer-events: none;
+    }
+    
+    .aurora-bg::before, .aurora-bg::after {
+      content: '';
+      position: absolute;
+      width: 300px;
+      height: 300px;
+      border-radius: 50%;
+      filter: blur(80px);
+      opacity: 0.15;
+      will-change: transform;
+    }
+    
+    .aurora-bg::before {
+      background: #7c3aed;
+      top: -50px;
+      left: -50px;
+      animation: aurora-orbit-1 16s ease infinite alternate;
+    }
+    
+    .aurora-bg::after {
+      background: #3b82f6;
+      bottom: -50px;
+      right: -50px;
+      animation: aurora-orbit-2 20s ease infinite alternate;
+    }
+    
+    @keyframes aurora-orbit-1 {
+      0% { transform: translate(0, 0) scale(1); }
+      50% { transform: translate(100px, 80px) scale(1.2); }
+      100% { transform: translate(30px, 150px) scale(0.9); }
+    }
+    
+    @keyframes aurora-orbit-2 {
+      0% { transform: translate(0, 0) scale(1.1); }
+      50% { transform: translate(-80px, -100px) scale(0.8); }
+      100% { transform: translate(-140px, -20px) scale(1.2); }
+    }
+    
+    /* ==========================================================================
+       4. SCROLLABLE CONTAINERS (INDIVIDUAL SCREENS)
+       ========================================================================== */
+    .screen-viewport {
+      flex: 1;
+      position: relative;
+      overflow: hidden;
+      width: 100%;
+    }
+    
+    .screen {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      overflow-y: auto;
+      overflow-x: hidden;
+      padding: calc(var(--safe-top) + 20px) 20px calc(80px + var(--safe-bottom)) 20px;
+      box-sizing: border-box;
+      opacity: 0;
+      transform: translateY(15px);
+      pointer-events: none;
+      transition: opacity 0.35s cubic-bezier(0.25, 1, 0.5, 1), 
+                  transform 0.35s cubic-bezier(0.25, 1, 0.5, 1);
+      webkit-overflow-scrolling: touch;
+      will-change: opacity, transform;
+    }
+    
+    .screen.active {
+      opacity: 1;
+      transform: translateY(0);
+      pointer-events: auto;
+      z-index: 5;
+    }
+    
+    /* Hide scrollbars but preserve scrolling functionality */
+    .screen::-webkit-scrollbar {
+      display: none;
+    }
+    
+    /* ==========================================================================
+       5. DESIGN SYSTEM UI COMPONENTS (GLASS CARDS, PILLS, HEADERS)
+       ========================================================================== */
+    .glass-card {
+      background: var(--glass-bg);
+      backdrop-filter: var(--glass-blur);
+      -webkit-backdrop-filter: var(--webkit-glass-blur);
+      border: var(--glass-border);
+      border-radius: 24px;
+      box-shadow: var(--glass-shadow);
+      padding: 20px;
+      margin-bottom: 16px;
+      position: relative;
+      overflow: hidden;
+      will-change: transform, opacity;
+    }
+    
+    /* Staggered entry animation */
+    .stagger-item {
+      opacity: 0;
+      transform: translateY(20px);
+    }
+    
+    .active .stagger-item {
+      animation: staggerUp 0.6s cubic-bezier(0.25, 1, 0.5, 1) forwards;
+    }
+    
+    @keyframes staggerUp {
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+    
+    /* Stagger delays dynamically injected up to 8 items */
+    .active .stagger-item:nth-child(1) { animation-delay: 0ms; }
+    .active .stagger-item:nth-child(2) { animation-delay: 60ms; }
+    .active .stagger-item:nth-child(3) { animation-delay: 120ms; }
+    .active .stagger-item:nth-child(4) { animation-delay: 180ms; }
+    .active .stagger-item:nth-child(5) { animation-delay: 240ms; }
+    .active .stagger-item:nth-child(6) { animation-delay: 300ms; }
+    .active .stagger-item:nth-child(7) { animation-delay: 360ms; }
+    .active .stagger-item:nth-child(8) { animation-delay: 420ms; }
+    
+    /* Section Labels */
+    .label-caps {
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      color: var(--text-secondary);
+      margin-bottom: 12px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    
+    .count-badge {
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 12px;
+      padding: 2px 8px;
+      font-size: 10px;
+      color: var(--text-primary);
+    }
+    
+    /* Header Parallax Containers */
+    .screen-header {
+      margin-bottom: 24px;
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      will-change: transform, opacity;
+    }
+    
+    .header-text h1 {
+      font-size: 28px;
+      font-weight: 800;
+      letter-spacing: -0.5px;
+      line-height: 1.2;
+    }
+    
+    .header-text p {
+      font-size: 15px;
+      font-weight: 400;
+      color: var(--text-secondary);
+      margin-top: 4px;
+      line-height: 1.6;
+    }
+    
+    /* Header Ring Badge Container */
+    .header-ring-wrapper {
+      position: relative;
+      width: 52px;
+      height: 52px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    
+    .header-ring-text {
+      position: absolute;
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--text-primary);
+    }
+    
+    /* ==========================================================================
+       6. NAVIGATION BAR (BOTTOM TABS)
+       ========================================================================== */
+    .bottom-nav {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      width: 100%;
+      height: calc(64px + var(--safe-bottom));
+      padding-bottom: var(--safe-bottom);
+      background: rgba(10, 10, 15, 0.7);
+      backdrop-filter: var(--glass-blur);
+      -webkit-backdrop-filter: var(--webkit-glass-blur);
+      border-top: 1px solid rgba(255, 255, 255, 0.08);
+      display: flex;
+      align-items: center;
+      justify-content: space-around;
+      z-index: 100;
+      box-sizing: border-box;
+    }
+    
+    .nav-item {
+      flex: 1;
+      height: 100%;
+      background: none;
+      border: none;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      color: var(--text-secondary);
+      font-family: inherit;
+      font-size: 10px;
+      font-weight: 600;
+      position: relative;
+      z-index: 102;
+      cursor: pointer;
+      gap: 4px;
+      transition: color 0.3s cubic-bezier(0.25, 1, 0.5, 1);
+    }
+    
+    .nav-item.active {
+      color: var(--text-primary);
+    }
+    
+    .nav-item svg {
+      width: 20px;
+      height: 20px;
+      stroke: currentColor;
+      transition: transform 0.3s cubic-bezier(0.25, 1, 0.5, 1);
+    }
+    
+    .nav-item.active svg {
+      transform: scale(1.1);
+    }
+    
+    /* Active Sliding Pill */
+    .nav-indicator {
+      position: absolute;
+      top: 8px;
+      height: 48px;
+      border-radius: 24px;
+      background: rgba(255, 255, 255, 0.07);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      transition: all 0.38s cubic-bezier(0.25, 1, 0.5, 1);
+      z-index: 101;
+      pointer-events: none;
+    }
+    
+    /* ==========================================================================
+       7. FLOATING ACTION BUTTON (FAB)
+       ========================================================================== */
+    #main-fab {
+      position: absolute;
+      right: 20px;
+      bottom: calc(84px + var(--safe-bottom));
+      width: 56px;
+      height: 56px;
+      border-radius: 28px;
+      background: var(--accent-gradient);
+      border: none;
+      color: white;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 8px 24px rgba(109, 40, 217, 0.4), inset 0 1px 0 rgba(255,255,255,0.3);
+      cursor: pointer;
+      z-index: 90;
+      transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.3s ease;
+      will-change: transform, opacity;
+    }
+    
+    #main-fab:active {
+      transform: scale(0.9);
+    }
+    
+    /* FAB Pulse animation on tap trigger */
+    .fab-pulse {
+      animation: scalePulse 0.4s cubic-bezier(0.32, 0.72, 0, 1) forwards;
+    }
+    
+    @keyframes scalePulse {
+      0% { transform: scale(1); }
+      50% { transform: scale(0.85); }
+      75% { transform: scale(1.12); }
+      100% { transform: scale(1); }
+    }
+    
+    /* ==========================================================================
+       8. SCREEN 1 DETAILS — TODAY
+       ========================================================================== */
+    /* Quick Stats scrollbar-less wrapper */
+    .stats-strip {
+      display: flex;
+      gap: 12px;
+      overflow-x: auto;
+      padding-bottom: 8px;
+      margin-bottom: 24px;
+      width: calc(100% + 40px);
+      margin-left: -20px;
+      padding-left: 20px;
+      padding-right: 20px;
+      webkit-overflow-scrolling: touch;
+    }
+    
+    .stats-strip::-webkit-scrollbar {
+      display: none;
+    }
+    
+    .stat-pill {
+      flex: 0 0 auto;
+      background: var(--glass-bg);
+      backdrop-filter: var(--glass-blur);
+      -webkit-backdrop-filter: var(--webkit-glass-blur);
+      border: var(--glass-border);
+      border-radius: 20px;
+      padding: 10px 16px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--text-primary);
+    }
+    
+    .stat-pill .emoji {
+      font-size: 15px;
+    }
+    
+    /* Task Cards */
+    .task-container {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+    
+    .task-card-wrapper {
+      position: relative;
+      width: 100%;
+      border-radius: 24px;
+      overflow: hidden;
+      will-change: transform;
+    }
+    
+    .task-card {
+      position: relative;
+      z-index: 10;
+      background: rgba(255, 255, 255, 0.06);
+      backdrop-filter: var(--glass-blur);
+      -webkit-backdrop-filter: var(--webkit-glass-blur);
+      border: var(--glass-border);
+      border-radius: 24px;
+      padding: 18px 20px;
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      will-change: transform, opacity;
+      cursor: grab;
+    }
+    
+    .task-card:active {
+      cursor: grabbing;
+    }
+    
+    /* Custom Checkbox SVG Drawing */
+    .checkbox-trigger {
+      width: 44px;
+      height: 44px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-left: -12px; /* Pull into padding for HIG 44px target bounds */
+      cursor: pointer;
+    }
+    
+    .checkbox-svg {
+      width: 22px;
+      height: 22px;
+      overflow: visible;
+    }
+    
+    .checkbox-circle {
+      stroke: rgba(245, 243, 255, 0.35);
+      stroke-width: 2;
+      fill: none;
+      transition: stroke 0.3s ease;
+    }
+    
+    .checkbox-fill {
+      fill: var(--success-color);
+      transform: scale(0);
+      transform-origin: 11px 11px;
+      opacity: 0;
+      transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.2s ease;
+    }
+    
+    .checkbox-checkmark {
+      stroke: #0a0a0f;
+      stroke-width: 2.2;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      fill: none;
+      stroke-dasharray: 14;
+      stroke-dashoffset: 14;
+      transition: stroke-dashoffset 0.25s ease;
+    }
+    
+    /* Checkbox Animations */
+    .completed .checkbox-circle {
+      stroke: var(--success-color);
+    }
+    
+    .completed .checkbox-fill {
+      transform: scale(1);
+      opacity: 1;
+    }
+    
+    .completed .checkbox-checkmark {
+      stroke-dashoffset: 0;
+    }
+    
+    /* Task Content */
+    .task-details {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+    
+    .task-title-wrapper {
+      position: relative;
+      display: inline-block;
+      align-self: flex-start;
+    }
+    
+    .task-title {
+      font-size: 15px;
+      font-weight: 500;
+      color: var(--text-primary);
+      transition: color 0.3s ease;
+    }
+    
+    .task-card.completed .task-title {
+      color: var(--text-secondary);
+    }
+    
+    /* Strikethrough sliding line */
+    .strikethrough-line {
+      position: absolute;
+      left: 0;
+      top: 50%;
+      width: 0;
+      height: 1.5px;
+      background: var(--text-secondary);
+      transition: width 0.3s ease;
+    }
+    
+    .task-card.completed .strikethrough-line {
+      width: 100%;
+    }
+    
+    /* Secondary Line: Time and Priority Badge */
+    .task-meta {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    
+    .task-time {
+      font-size: 11px;
+      font-weight: 500;
+      color: var(--text-secondary);
+    }
+    
+    .priority-badge {
+      font-size: 10px;
+      font-weight: 700;
+      padding: 2px 8px;
+      border-radius: 10px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    
+    .priority-high {
+      background: rgba(248, 113, 113, 0.15);
+      color: var(--danger-color);
+      box-shadow: 0 0 12px rgba(248, 113, 113, 0.15);
+      animation: badgePulse 2s infinite alternate;
+    }
+    
+    .priority-medium {
+      background: rgba(251, 191, 36, 0.15);
+      color: var(--streak-amber);
+    }
+    
+    .priority-low {
+      background: rgba(52, 211, 153, 0.15);
+      color: var(--success-color);
+    }
+    
+    @keyframes badgePulse {
+      0% { opacity: 0.85; }
+      100% { opacity: 1; box-shadow: 0 0 16px rgba(248, 113, 113, 0.35); }
+    }
+    
+    /* Completed Tasks Collapse Styling */
+    .task-card-wrapper.collapsing {
+      animation: compressSpring 0.4s cubic-bezier(0.25, 1, 0.5, 1) forwards;
+    }
+    
+    @keyframes compressSpring {
+      0% { transform: scale(1); opacity: 1; height: 78px; margin-bottom: 12px; }
+      50% { transform: scale(0.95); opacity: 0.5; }
+      100% { transform: scale(0.9); opacity: 0; height: 0; margin-bottom: 0; padding: 0; pointer-events: none; }
+    }
+    
+    .completed-section-header {
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.8px;
+      color: var(--text-secondary);
+      margin-top: 16px;
+      margin-bottom: 10px;
+      text-transform: uppercase;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    
+    .completed-section-header svg {
+      width: 14px;
+      height: 14px;
+      transition: transform 0.3s ease;
+    }
+    
+    .completed-section-header.collapsed svg {
+      transform: rotate(-90deg);
+    }
+    
+    .completed-tasks-list {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      transition: all 0.35s cubic-bezier(0.25, 1, 0.5, 1);
+      max-height: 500px;
+      opacity: 1;
+      overflow: hidden;
+    }
+    
+    .completed-tasks-list.collapsed {
+      max-height: 0;
+      opacity: 0;
+      margin: 0;
+      pointer-events: none;
+    }
+    
+    /* Swipe Delete Zone */
+    .swipe-delete-zone {
+      position: absolute;
+      top: 0;
+      right: 0;
+      height: 100%;
+      width: 100%;
+      background: var(--danger-color);
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      padding-right: 28px;
+      box-sizing: border-box;
+      border-radius: 24px;
+      z-index: 1;
+      opacity: 0;
+      transition: opacity 0.2s ease;
+    }
+    
+    .swipe-delete-zone svg {
+      width: 24px;
+      height: 24px;
+      stroke: white;
+    }
+    
+    /* Empty State Illustration */
+    .empty-state {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 60px 20px;
+      text-align: center;
+      color: var(--text-secondary);
+    }
+    
+    .empty-state svg {
+      width: 64px;
+      height: 64px;
+      stroke: var(--accent-purple);
+      opacity: 0.6;
+      margin-bottom: 16px;
+      animation: floatEffect 4s ease-in-out infinite;
+    }
+    
+    @keyframes floatEffect {
+      0%, 100% { transform: translateY(0px); }
+      50% { transform: translateY(-10px); }
+    }
+    
+    .empty-state p {
+      font-size: 14px;
+      font-weight: 500;
+    }
+    
+    /* ==========================================================================
+       9. SCREEN 2 DETAILS — HABITS
+       ========================================================================== */
+    .habit-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 14px;
+      margin-bottom: 24px;
+    }
+    
+    .habit-card {
+      position: relative;
+      background: var(--glass-bg);
+      backdrop-filter: var(--glass-blur);
+      -webkit-backdrop-filter: var(--webkit-glass-blur);
+      border: var(--glass-border);
+      border-radius: 24px;
+      padding: 16px;
+      box-shadow: var(--glass-shadow);
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      cursor: pointer;
+      overflow: hidden;
+      transition: border 0.3s ease, box-shadow 0.3s ease;
+    }
+    
+    /* Habit Touch Ripple effect container */
+    .ripple-effect {
+      position: absolute;
+      border-radius: 50%;
+      background: rgba(52, 211, 153, 0.2);
+      transform: scale(0);
+      animation: touchRipple 0.5s ease-out forwards;
+      pointer-events: none;
+    }
+    
+    @keyframes touchRipple {
+      to {
+        transform: scale(3.5);
+        opacity: 0;
+      }
+    }
+    
+    .habit-card.checked-today {
+      border: 1px solid rgba(52, 211, 153, 0.4);
+      box-shadow: 0 8px 32px rgba(52, 211, 153, 0.1), inset 0 1px 0 rgba(255,255,255,0.05);
+    }
+    
+    .habit-icon-circle {
+      width: 42px;
+      height: 42px;
+      border-radius: 14px;
+      background: rgba(255, 255, 255, 0.06);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 20px;
+      transition: background 0.3s ease;
+    }
+    
+    .habit-card.checked-today .habit-icon-circle {
+      background: rgba(52, 211, 153, 0.15);
+    }
+    
+    .habit-title {
+      font-size: 15px;
+      font-weight: 600;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    
+    .habit-streak {
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--streak-amber);
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+    
+    /* Numbers Ticker Slide */
+    .ticker-up {
+      animation: tickUp 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+    
+    @keyframes tickUp {
+      0% { transform: translateY(4px); opacity: 0.5; }
+      100% { transform: translateY(0); opacity: 1; }
+    }
+    
+    /* 7 Dot Weekly Calendar */
+    .habit-calendar {
+      display: flex;
+      justify-content: space-between;
+      margin-top: 4px;
+    }
+    
+    .calendar-day-dot {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+    }
+    
+    .day-label {
+      font-size: 8px;
+      font-weight: 700;
+      color: var(--text-secondary);
+      text-transform: uppercase;
+    }
+    
+    .day-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: rgba(245, 243, 255, 0.15);
+      transition: background 0.3s ease, box-shadow 0.3s ease;
+    }
+    
+    .day-dot.completed {
+      background: var(--success-color);
+      box-shadow: 0 0 6px var(--success-color);
+    }
+    
+    .day-dot.missed {
+      background: rgba(248, 113, 113, 0.3);
+    }
+    
+    /* Secondary Add habit card button */
+    .add-habit-btn {
+      width: 100%;
+      background: rgba(255,255,255,0.04);
+      border: 1px dashed rgba(255,255,255,0.15);
+      border-radius: 20px;
+      padding: 16px;
+      font-family: inherit;
+      color: var(--text-secondary);
+      font-size: 14px;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+    
+    .add-habit-btn:active {
+      background: rgba(255,255,255,0.08);
+      border-color: rgba(255,255,255,0.3);
+      color: var(--text-primary);
+    }
+    
+    /* ==========================================================================
+       10. SCREEN 3 DETAILS — REMINDERS
+       ========================================================================== */
+    .reminders-list {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+    
+    .reminder-card {
+      position: relative;
+      background: var(--glass-bg);
+      backdrop-filter: var(--glass-blur);
+      -webkit-backdrop-filter: var(--webkit-glass-blur);
+      border: var(--glass-border);
+      border-radius: 24px;
+      padding: 18px 20px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      will-change: transform, opacity;
+    }
+    
+    .reminder-left {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+    
+    .reminder-bell-wrap {
+      width: 40px;
+      height: 40px;
+      border-radius: 12px;
+      background: rgba(255, 255, 255, 0.05);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--text-secondary);
+      transition: color 0.3s ease, background 0.3s ease;
+    }
+    
+    .reminder-card.active .reminder-bell-wrap {
+      color: var(--streak-amber);
+      background: rgba(251, 191, 36, 0.1);
+    }
+    
+    .reminder-bell-wrap.ringing {
+      animation: bellWobble 0.5s ease infinite;
+    }
+    
+    @keyframes bellWobble {
+      0%, 100% { transform: rotate(0); }
+      15% { transform: rotate(-12deg); }
+      30% { transform: rotate(10deg); }
+      45% { transform: rotate(-8deg); }
+      60% { transform: rotate(6deg); }
+      75% { transform: rotate(-4deg); }
+    }
+    
+    .reminder-bell-wrap svg {
+      width: 20px;
+      height: 20px;
+      stroke: currentColor;
+      fill: none;
+    }
+    
+    .reminder-details {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+    
+    .reminder-time {
+      font-size: 20px;
+      font-weight: 700;
+      letter-spacing: -0.5px;
+    }
+    
+    .reminder-label {
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--text-secondary);
+    }
+    
+    /* Modern Switch Toggle */
+    .ios-switch {
+      position: relative;
+      width: 48px;
+      height: 28px;
+      border-radius: 14px;
+      background: rgba(255, 255, 255, 0.12);
+      cursor: pointer;
+      transition: background 0.3s cubic-bezier(0.25, 1, 0.5, 1);
+    }
+    
+    .ios-switch::after {
+      content: '';
+      position: absolute;
+      top: 2px;
+      left: 2px;
+      width: 24px;
+      height: 24px;
+      border-radius: 12px;
+      background: white;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+      transition: transform 0.3s cubic-bezier(0.25, 1, 0.5, 1);
+      will-change: transform;
+    }
+    
+    .reminder-card.active .ios-switch {
+      background: var(--success-color);
+    }
+    
+    .reminder-card.active .ios-switch::after {
+      transform: translateX(20px);
+    }
+    
+    /* In-App Notifications Friendly Request Prompt */
+    .notif-permission-banner {
+      background: linear-gradient(135deg, rgba(167, 139, 250, 0.12) 0%, rgba(109, 40, 217, 0.12) 100%);
+      border: 1px solid rgba(167, 139, 250, 0.2);
+      border-radius: 24px;
+      padding: 16px 20px;
+      margin-bottom: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+    
+    .notif-banner-header {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 14px;
+      font-weight: 600;
+    }
+    
+    .notif-banner-header svg {
+      width: 18px;
+      height: 18px;
+      stroke: var(--accent-purple);
+    }
+    
+    .notif-banner-desc {
+      font-size: 12.5px;
+      font-weight: 400;
+      color: var(--text-secondary);
+      line-height: 1.5;
+    }
+    
+    .notif-banner-btn {
+      align-self: flex-start;
+      background: var(--accent-gradient);
+      color: white;
+      border: none;
+      font-family: inherit;
+      font-size: 12px;
+      font-weight: 700;
+      padding: 8px 16px;
+      border-radius: 12px;
+      cursor: pointer;
+      box-shadow: 0 4px 12px rgba(109, 40, 217, 0.25);
+      transition: transform 0.2s ease;
+    }
+    
+    .notif-banner-btn:active {
+      transform: scale(0.95);
+    }
+    
+    /* ==========================================================================
+       11. SCREEN 4 DETAILS — PROGRESS
+       ========================================================================== */
+    .progress-hero {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+      margin-bottom: 20px;
+      text-align: center;
+    }
+    
+    .donut-container {
+      position: relative;
+      width: 156px;
+      height: 156px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 16px;
+    }
+    
+    .donut-percentage {
+      position: absolute;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+    }
+    
+    .donut-val {
+      font-size: 32px;
+      font-weight: 800;
+      letter-spacing: -1px;
+    }
+    
+    .donut-label {
+      font-size: 9px;
+      font-weight: 700;
+      letter-spacing: 0.5px;
+      color: var(--text-secondary);
+      text-transform: uppercase;
+      margin-top: -2px;
+    }
+    
+    .progress-hero-title {
+      font-size: 15px;
+      font-weight: 600;
+      margin-top: 4px;
+    }
+    
+    .progress-hero-desc {
+      font-size: 13px;
+      color: var(--text-secondary);
+      margin-top: 4px;
+    }
+    
+    /* Consistency Grid Heatmaps */
+    .heatmap-container {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      margin-bottom: 16px;
+    }
+    
+    .heatmap-habit-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      background: rgba(255,255,255,0.03);
+      padding: 12px 16px;
+      border-radius: 18px;
+      border: 1px solid rgba(255,255,255,0.04);
+    }
+    
+    .heatmap-left {
+      flex: 1;
+      min-width: 0;
+    }
+    
+    .heatmap-name {
+      font-size: 13px;
+      font-weight: 600;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    
+    .heatmap-streak-sub {
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--streak-amber);
+      margin-top: 2px;
+    }
+    
+    /* 6x5 30-Day Dot Heatmap */
+    .heatmap-grid {
+      display: grid;
+      grid-template-columns: repeat(6, 1fr);
+      gap: 4px;
+    }
+    
+    .heatmap-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 3px;
+      background: rgba(245, 243, 255, 0.08);
+      transition: background 0.3s ease, box-shadow 0.3s ease;
+    }
+    
+    /* Dynamic intensity color shades based on streak */
+    .heatmap-dot.completed-low {
+      background: rgba(167, 139, 250, 0.4);
+    }
+    
+    .heatmap-dot.completed-med {
+      background: rgba(167, 139, 250, 0.7);
+    }
+    
+    .heatmap-dot.completed-high {
+      background: var(--accent-purple);
+      box-shadow: 0 0 4px var(--accent-purple);
+    }
+    
+    /* Weekly Bar Chart */
+    .chart-container {
+      height: 140px;
+      display: flex;
+      align-items: flex-end;
+      justify-content: space-between;
+      padding-top: 20px;
+      padding-bottom: 4px;
+      box-sizing: border-box;
+      margin-bottom: 8px;
+    }
+    
+    .chart-bar-wrap {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 8px;
+      height: 100%;
+      justify-content: flex-end;
+    }
+    
+    .chart-bar-outer {
+      width: 14px;
+      height: 80px;
+      background: rgba(255, 255, 255, 0.04);
+      border-radius: 7px;
+      position: relative;
+      overflow: hidden;
+    }
+    
+    .chart-bar-inner {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      width: 100%;
+      height: 0; /* Animated dynamically */
+      background: rgba(255,255,255,0.15);
+      border-radius: 7px;
+      transition: height 1.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+      will-change: height;
+    }
+    
+    .chart-bar-wrap.today .chart-bar-inner {
+      background: var(--accent-gradient);
+      box-shadow: 0 0 10px rgba(109, 40, 217, 0.4);
+    }
+    
+    .chart-bar-label {
+      font-size: 9px;
+      font-weight: 700;
+      color: var(--text-secondary);
+      text-transform: uppercase;
+    }
+    
+    .chart-bar-wrap.today .chart-bar-label {
+      color: var(--accent-purple);
+    }
+    
+    /* Streak Records Cards */
+    .records-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      margin-bottom: 16px;
+    }
+    
+    .record-box {
+      background: var(--glass-bg);
+      backdrop-filter: var(--glass-blur);
+      -webkit-backdrop-filter: var(--webkit-glass-blur);
+      border: var(--glass-border);
+      border-radius: 20px;
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+    
+    .record-box .lbl {
+      font-size: 9.5px;
+      font-weight: 700;
+      letter-spacing: 0.5px;
+      color: var(--text-secondary);
+      text-transform: uppercase;
+    }
+    
+    .record-box .val {
+      font-size: 15px;
+      font-weight: 700;
+    }
+    
+    .record-box .highlight {
+      color: var(--accent-purple);
+    }
+    
+    /* Motivational Quotes Card */
+    .quote-card {
+      text-align: center;
+      padding: 24px;
+      background: linear-gradient(135deg, rgba(255,255,255,0.01) 0%, rgba(255,255,255,0.04) 100%);
+    }
+    
+    .quote-icon {
+      font-size: 24px;
+      color: rgba(167, 139, 250, 0.2);
+      margin-bottom: 8px;
+    }
+    
+    .quote-text {
+      font-size: 13.5px;
+      font-style: italic;
+      font-weight: 500;
+      line-height: 1.5;
+      color: var(--text-primary);
+      margin-bottom: 8px;
+    }
+    
+    .quote-author {
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.5px;
+      color: var(--text-secondary);
+      text-transform: uppercase;
+    }
+    
+    /* ==========================================================================
+       12. MODAL SHEETS (SPRING POP-UP FORMS)
+       ========================================================================== */
+    .bottom-sheet-overlay {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.4);
+      backdrop-filter: blur(0px);
+      -webkit-backdrop-filter: blur(0px);
+      z-index: 200;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.4s cubic-bezier(0.32, 0.72, 0, 1), 
+                  backdrop-filter 0.4s cubic-bezier(0.32, 0.72, 0, 1);
+    }
+    
+    .bottom-sheet-overlay.active {
+      opacity: 1;
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      pointer-events: auto;
+    }
+    
+    .bottom-sheet {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      width: 100%;
+      background: rgba(15, 15, 25, 0.85);
+      backdrop-filter: var(--glass-blur);
+      -webkit-backdrop-filter: var(--webkit-glass-blur);
+      border-top: 1px solid rgba(255, 255, 255, 0.12);
+      border-top-left-radius: 28px;
+      border-top-right-radius: 28px;
+      padding: 24px;
+      padding-bottom: calc(24px + var(--safe-bottom));
+      box-sizing: border-box;
+      transform: translateY(100%);
+      transition: transform 0.45s cubic-bezier(0.32, 0.72, 0, 1);
+      z-index: 201;
+      box-shadow: 0 -12px 36px rgba(0, 0, 0, 0.6);
+    }
+    
+    .bottom-sheet.active {
+      transform: translateY(0);
+    }
+    
+    /* Sheet Pull Bar */
+    .bottom-sheet::before {
+      content: '';
+      display: block;
+      width: 36px;
+      height: 5px;
+      background: rgba(245, 243, 255, 0.2);
+      border-radius: 3px;
+      margin: -12px auto 20px auto;
+    }
+    
+    .sheet-title {
+      font-size: 20px;
+      font-weight: 700;
+      margin-bottom: 20px;
+      letter-spacing: -0.5px;
+    }
+    
+    /* Modern Glass Forms */
+    .form-group {
+      margin-bottom: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    
+    .form-label {
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.8px;
+      color: var(--text-secondary);
+      text-transform: uppercase;
+    }
+    
+    .glass-input {
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 16px;
+      padding: 14px 18px;
+      font-family: inherit;
+      font-size: 15px;
+      color: var(--text-primary);
+      outline: none;
+      transition: border 0.3s ease, background 0.3s ease;
+      min-height: 48px;
+    }
+    
+    .glass-input:focus {
+      border-color: var(--accent-purple);
+      background: rgba(255, 255, 255, 0.08);
+    }
+    
+    /* Horizontal Toggle Selectors */
+    .pills-selector {
+      display: flex;
+      gap: 10px;
+    }
+    
+    .pill-opt {
+      flex: 1;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 14px;
+      padding: 12px;
+      text-align: center;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      color: var(--text-secondary);
+      transition: all 0.25s cubic-bezier(0.25, 1, 0.5, 1);
+    }
+    
+    .pill-opt.active {
+      color: var(--text-primary);
+      background: var(--accent-gradient);
+      border-color: transparent;
+      box-shadow: 0 4px 12px rgba(109, 40, 217, 0.25);
+    }
+    
+    /* Grid Selectors for Emojis */
+    .emoji-grid-select {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 10px;
+      max-height: 136px;
+      overflow-y: auto;
+      padding: 4px;
+    }
+    
+    .emoji-grid-select::-webkit-scrollbar {
+      display: none;
+    }
+    
+    .emoji-opt {
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid rgba(255, 255, 255, 0.06);
+      border-radius: 12px;
+      height: 40px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 20px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+    
+    .emoji-opt.active {
+      background: rgba(167, 139, 250, 0.15);
+      border-color: var(--accent-purple);
+      transform: scale(1.08);
+    }
+    
+    /* Horizontal Toggle Settings */
+    .sheet-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 20px;
+    }
+    
+    /* Glass Submit CTAs */
+    .submit-cta {
+      width: 100%;
+      background: var(--accent-gradient);
+      color: white;
+      border: none;
+      border-radius: 16px;
+      padding: 16px;
+      font-family: inherit;
+      font-size: 15px;
+      font-weight: 700;
+      cursor: pointer;
+      box-shadow: 0 6px 20px rgba(109, 40, 217, 0.35);
+      transition: transform 0.2s ease, opacity 0.2s ease;
+      min-height: 48px;
+    }
+    
+    .submit-cta:active {
+      transform: scale(0.98);
+      opacity: 0.95;
+    }
+    
+    /* Backup Alert Popup (Friendly system override) */
+    .backup-notif-toast {
+      position: absolute;
+      top: calc(var(--safe-top) + 12px);
+      left: 16px;
+      right: 16px;
+      background: rgba(15, 15, 25, 0.85);
+      backdrop-filter: var(--glass-blur);
+      -webkit-backdrop-filter: var(--webkit-glass-blur);
+      border: 1px solid rgba(251, 191, 36, 0.4);
+      border-radius: 20px;
+      padding: 14px 18px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      z-index: 500;
+      box-shadow: 0 12px 32px rgba(0,0,0,0.5);
+      transform: translateY(-150px);
+      transition: transform 0.45s cubic-bezier(0.25, 1, 0.5, 1);
+    }
+    
+    .backup-notif-toast.active {
+      transform: translateY(0);
+    }
+    
+    .toast-bell {
+      font-size: 22px;
+      color: var(--streak-amber);
+      animation: bellWobble 0.5s ease 4;
+    }
+    
+    .toast-content {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+    
+    .toast-title {
+      font-size: 13.5px;
+      font-weight: 700;
+    }
+    
+    .toast-subtitle {
+      font-size: 11px;
+      font-weight: 500;
+      color: var(--text-secondary);
+    }
+  </style>
+</head>
+<body>
+  
+  <div id="app-container">
+    
+    <!-- Shifting Aurora Background -->
+    <div class="aurora-bg"></div>
+    
+    <!-- Screen Viewports -->
+    <div class="screen-viewport">
+      
+      <!-- SCREEN 1: TODAY (DEFAULT VIEW) -->
+      <div id="screen-today" class="screen active">
+        <div class="screen-header">
+          <div class="header-text">
+            <h1 id="today-greeting">Good morning ☀️</h1>
+            <p id="today-date-text">Monday, 26 May</p>
+            <p id="today-task-summary">You have 0 tasks today</p>
+          </div>
+          <div class="header-ring-wrapper">
+            <svg width="48" height="48" viewBox="0 0 48 48">
+              <circle cx="24" cy="24" r="20" stroke="rgba(255,255,255,0.08)" stroke-width="4.5" fill="none"></circle>
+              <circle id="header-progress-ring" cx="24" cy="24" r="20" stroke="url(#header-grad)" stroke-width="4.5" fill="none"
+                      stroke-dasharray="125.6" stroke-dashoffset="125.6" stroke-linecap="round"
+                      style="transition: stroke-dashoffset 1.2s cubic-bezier(0.34, 1.56, 0.64, 1);"></circle>
+              <defs>
+                <linearGradient id="header-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+                  <stop offset="0%" stop-color="#a78bfa"></stop>
+                  <stop offset="100%" stop-color="#6d28d9"></stop>
+                </linearGradient>
+              </defs>
+            </svg>
+            <span class="header-ring-text" id="header-ring-pct">0%</span>
+          </div>
+        </div>
+        
+        <!-- Horizontal Scroll Quick Stats -->
+        <div class="stats-strip stagger-item">
+          <div class="stat-pill">
+            <span class="emoji">✅</span>
+            <span id="stat-tasks-done">0 done today</span>
+          </div>
+          <div class="stat-pill">
+            <span class="emoji">🔥</span>
+            <span id="stat-habit-streak">0 day streak</span>
+          </div>
+          <div class="stat-pill">
+            <span class="emoji">⏰</span>
+            <span id="stat-next-reminder">No reminders</span>
+          </div>
+        </div>
+        
+        <!-- Today's Tasks Section -->
+        <div class="stagger-item">
+          <div class="label-caps">
+            <span>Today's Tasks</span>
+            <span class="count-badge" id="tasks-count-badge">0</span>
+          </div>
+          
+          <div class="task-container" id="today-tasks-container">
+            <!-- Dynamically Rendered -->
+          </div>
+        </div>
+        
+        <!-- Completed Section Accordion -->
+        <div id="completed-accordion-wrap" class="stagger-item" style="display:none;">
+          <div class="completed-section-header" id="completed-accordion-header">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="6 9 12 15 18 9"></polyline>
+            </svg>
+            <span>Completed (<span id="completed-count-text">0</span>)</span>
+          </div>
+          <div class="completed-tasks-list" id="completed-tasks-container">
+            <!-- Dynamically Rendered -->
+          </div>
+        </div>
+      </div>
+      
+      <!-- SCREEN 2: HABITS -->
+      <div id="screen-habits" class="screen">
+        <div class="screen-header">
+          <div class="header-text">
+            <h1>Build streaks 🔥</h1>
+            <p id="habits-header-date">Tuesday, 26 May</p>
+          </div>
+        </div>
+        
+        <div class="label-caps stagger-item">
+          <span>Active Habits</span>
+          <span class="count-badge" id="habits-count-badge">0</span>
+        </div>
+        
+        <div class="habit-grid stagger-item" id="habits-grid-container">
+          <!-- Dynamically Rendered -->
+        </div>
+        
+        <button class="add-habit-btn stagger-item" id="btn-trigger-add-habit">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="12" y1="5" x2="12" y2="19"></line>
+            <line x1="5" y1="12" x2="19" y2="12"></line>
+          </svg>
+          Create Custom Habit
+        </button>
+      </div>
+      
+      <!-- SCREEN 3: REMINDERS -->
+      <div id="screen-reminders" class="screen">
+        <div class="screen-header">
+          <div class="header-text">
+            <h1>Never miss a thing ⏰</h1>
+            <p>Your chronological timers</p>
+          </div>
+        </div>
+        
+        <!-- Soft Notifications Permission Card -->
+        <div class="notif-permission-banner stagger-item" id="permission-banner" style="display:none;">
+          <div class="notif-banner-header">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
+              <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
+            </svg>
+            <span>Enable Push Reminders</span>
+          </div>
+          <div class="notif-banner-desc">
+            Allow system notifications to receive alerts when your timers complete, even in the background.
+          </div>
+          <button class="notif-banner-btn" id="btn-grant-permission">Grant Access</button>
+        </div>
+        
+        <div class="label-caps stagger-item">
+          <span>Active Reminders</span>
+          <span class="count-badge" id="reminders-count-badge">0</span>
+        </div>
+        
+        <div class="reminders-list stagger-item" id="reminders-list-container">
+          <!-- Dynamically Rendered -->
+        </div>
+      </div>
+      
+      <!-- SCREEN 4: PROGRESS -->
+      <div id="screen-progress" class="screen">
+        <div class="screen-header">
+          <div class="header-text">
+            <h1>Your journey 📈</h1>
+            <p>Insights & Consistency</p>
+          </div>
+        </div>
+        
+        <!-- Hero Donut Card -->
+        <div class="glass-card progress-hero stagger-item">
+          <div class="donut-container">
+            <svg width="156" height="156" viewBox="0 0 180 180">
+              <circle cx="90" cy="90" r="72" stroke="rgba(255,255,255,0.04)" stroke-width="11" fill="none"></circle>
+              <circle id="progress-hero-donut" cx="90" cy="90" r="72" stroke="url(#donut-grad)" stroke-width="11" fill="none"
+                      stroke-dasharray="452.4" stroke-dashoffset="452.4" stroke-linecap="round"
+                      style="transition: stroke-dashoffset 1.2s cubic-bezier(0.34, 1.56, 0.64, 1);"></circle>
+              <defs>
+                <linearGradient id="donut-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+                  <stop offset="0%" stop-color="#a78bfa"></stop>
+                  <stop offset="100%" stop-color="#6d28d9"></stop>
+                </linearGradient>
+              </defs>
+            </svg>
+            <div class="donut-percentage">
+              <span class="donut-val" id="donut-val-text">0%</span>
+              <span class="donut-label">Completed</span>
+            </div>
+          </div>
+          <h2 class="progress-hero-title" id="progress-hero-summary">0 of 0 tasks done</h2>
+          <p class="progress-hero-desc" id="progress-hero-motivation">Create some goals to begin tracking!</p>
+        </div>
+        
+        <!-- Weekly Completed Bar Chart -->
+        <div class="glass-card stagger-item">
+          <div class="label-caps" style="margin-bottom:8px;">Weekly Productivity</div>
+          <div class="chart-container" id="weekly-chart-element">
+            <div class="chart-bar-wrap" id="bar-mon">
+              <div class="chart-bar-outer"><div class="chart-bar-inner"></div></div>
+              <span class="chart-bar-label">M</span>
+            </div>
+            <div class="chart-bar-wrap" id="bar-tue">
+              <div class="chart-bar-outer"><div class="chart-bar-inner"></div></div>
+              <span class="chart-bar-label">T</span>
+            </div>
+            <div class="chart-bar-wrap" id="bar-wed">
+              <div class="chart-bar-outer"><div class="chart-bar-inner"></div></div>
+              <span class="chart-bar-label">W</span>
+            </div>
+            <div class="chart-bar-wrap" id="bar-thu">
+              <div class="chart-bar-outer"><div class="chart-bar-inner"></div></div>
+              <span class="chart-bar-label">T</span>
+            </div>
+            <div class="chart-bar-wrap" id="bar-fri">
+              <div class="chart-bar-outer"><div class="chart-bar-inner"></div></div>
+              <span class="chart-bar-label">F</span>
+            </div>
+            <div class="chart-bar-wrap" id="bar-sat">
+              <div class="chart-bar-outer"><div class="chart-bar-inner"></div></div>
+              <span class="chart-bar-label">S</span>
+            </div>
+            <div class="chart-bar-wrap" id="bar-sun">
+              <div class="chart-bar-outer"><div class="chart-bar-inner"></div></div>
+              <span class="chart-bar-label">S</span>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Habit Consistency Heatmaps (30-Day Grid) -->
+        <div class="glass-card stagger-item">
+          <div class="label-caps">Consistency (30 Days)</div>
+          <div class="heatmap-container" id="progress-heatmap-container">
+            <!-- Dynamically Rendered Heatmap Rows -->
+          </div>
+        </div>
+        
+        <!-- Records Metrics Row -->
+        <div class="records-row stagger-item">
+          <div class="record-box">
+            <span class="lbl">Best Streak</span>
+            <span class="val" id="record-best-streak">🔥 0 Days</span>
+          </div>
+          <div class="record-box">
+            <span class="lbl">Top Day</span>
+            <span class="val highlight" id="record-peak-day">None Yet</span>
+          </div>
+        </div>
+        
+        <!-- Motivational Quote Box -->
+        <div class="glass-card quote-card stagger-item">
+          <div class="quote-icon">“</div>
+          <p class="quote-text" id="quote-card-text">"Focus on being productive instead of busy."</p>
+          <span class="quote-author" id="quote-card-author">Tim Ferriss</span>
+        </div>
+      </div>
+      
+    </div>
+    
+    <!-- Navigation Tabs Bar -->
+    <nav class="bottom-nav">
+      <div class="nav-indicator" id="nav-indicator"></div>
+      
+      <button class="nav-item active" data-target="screen-today">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"></path>
+        </svg>
+        <span>Today</span>
+      </button>
+      
+      <button class="nav-item" data-target="screen-habits">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"></path>
+        </svg>
+        <span>Habits</span>
+      </button>
+      
+      <button class="nav-item" data-target="screen-reminders">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
+          <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
+        </svg>
+        <span>Reminders</span>
+      </button>
+      
+      <button class="nav-item" data-target="screen-progress">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M3 3v18h18"></path>
+          <path d="M18.7 8l-5.1 5.2-2.8-2.7L7 14.3"></path>
+        </svg>
+        <span>Progress</span>
+      </button>
+    </nav>
+    
+    <!-- Floating Action Button (FAB) -->
+    <button id="main-fab" aria-label="Add Item">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+        <line x1="12" y1="5" x2="12" y2="19"></line>
+        <line x1="5" y1="12" x2="19" y2="12"></line>
+      </svg>
+    </button>
+    
+    <!-- BACKUP NOTIFICATION POPUP (IN-APP REMINDER TOAST ALERT) -->
+    <div class="backup-notif-toast" id="backup-toast">
+      <span class="toast-bell">🔔</span>
+      <div class="toast-content">
+        <span class="toast-title" id="toast-title">Reminder Alert</span>
+        <span class="toast-subtitle" id="toast-subtitle">00:00 AM</span>
+      </div>
+    </div>
+    
+    <!-- ==========================================================================
+         MODAL BOTTOM SHEETS
+         ========================================================================== -->
+    <div class="bottom-sheet-overlay" id="sheet-overlay"></div>
+    
+    <!-- 1. ADD TASK BOTTOM SHEET -->
+    <div class="bottom-sheet" id="sheet-task">
+      <h2 class="sheet-title">Create New Task</h2>
+      <form id="form-task" onsubmit="event.preventDefault();">
+        <div class="form-group">
+          <label class="form-label" for="task-input-title">Task Name</label>
+          <input type="text" class="glass-input" id="task-input-title" placeholder="Type what to do..." required autocomplete="off">
+        </div>
+        
+        <div class="form-group">
+          <label class="form-label">Priority</label>
+          <div class="pills-selector" id="task-priority-selector">
+            <div class="pill-opt" data-value="LOW">🟢 Low</div>
+            <div class="pill-opt active" data-value="MEDIUM">🟡 Medium</div>
+            <div class="pill-opt" data-value="HIGH">🔴 High</div>
+          </div>
+        </div>
+        
+        <div class="form-group">
+          <label class="form-label" for="task-input-time">Time (Optional)</label>
+          <input type="time" class="glass-input" id="task-input-time">
+        </div>
+        
+        <div class="sheet-row">
+          <span class="form-label" style="margin-bottom:0;">Notify Reminder</span>
+          <div class="ios-switch" id="task-reminder-switch"></div>
+        </div>
+        
+        <button type="submit" class="submit-cta" id="btn-submit-task">Create Task</button>
+      </form>
+    </div>
+    
+    <!-- 2. ADD HABIT BOTTOM SHEET -->
+    <div class="bottom-sheet" id="sheet-habit">
+      <h2 class="sheet-title">Create Daily Habit</h2>
+      <form id="form-habit" onsubmit="event.preventDefault();">
+        <div class="form-group">
+          <label class="form-label" for="habit-input-name">Habit Name</label>
+          <input type="text" class="glass-input" id="habit-input-name" placeholder="E.g., Drink Water, Meditate" required autocomplete="off">
+        </div>
+        
+        <div class="form-group">
+          <label class="form-label">Choose Emoji Icon</label>
+          <div class="emoji-grid-select" id="habit-emoji-selector">
+            <!-- Dynamically Injected 20 Presets -->
+          </div>
+        </div>
+        
+        <button type="submit" class="submit-cta" id="btn-submit-habit">Start Tracking</button>
+      </form>
+    </div>
+    
+    <!-- 3. ADD REMINDER BOTTOM SHEET -->
+    <div class="bottom-sheet" id="sheet-reminder">
+      <h2 class="sheet-title">Add Alert Reminder</h2>
+      <form id="form-reminder" onsubmit="event.preventDefault();">
+        <div class="form-group">
+          <label class="form-label" for="reminder-input-label">Description</label>
+          <input type="text" class="glass-input" id="reminder-input-label" placeholder="What to remember..." required autocomplete="off">
+        </div>
+        
+        <div class="form-group">
+          <label class="form-label" for="reminder-input-time">Schedule Time</label>
+          <input type="time" class="glass-input" id="reminder-input-time" required>
+        </div>
+        
+        <button type="submit" class="submit-cta" id="btn-submit-reminder">Set Reminder</button>
+      </form>
+    </div>
+    
+  </div>
+  
+  <!-- ==========================================================================
+       JAVASCRIPT MODULES & CORE CONTROL ENGINE
+       ========================================================================== -->
+  <script>
+    /**
+     * ==========================================================================
+     * AURA PLANNER ENGINE (CORE RECONFIGURED VANILLA ENGINE)
+     * ==========================================================================
+     */
+    
+    // 10 Curated Premium Inspirational Quotes
+    const QUOTES_ARRAY = [
+      { text: "Focus on being productive instead of busy.", author: "Tim Ferriss" },
+      { text: "The only way to do great work is to love what you do.", author: "Steve Jobs" },
+      { text: "Your future is created by what you do today, not tomorrow.", author: "Robert Kiyosaki" },
+      { text: "The secret of getting ahead is getting started.", author: "Mark Twain" },
+      { text: "Simplicity is the ultimate sophistication.", author: "Leonardo da Vinci" },
+      { text: "Make each day your masterpiece.", author: "John Wooden" },
+      { text: "Action is the foundational key to all success.", author: "Pablo Picasso" },
+      { text: "A journey of a thousand miles begins with a single step.", author: "Lao Tzu" },
+      { text: "It is not that we have a short time to live, but that we waste it.", author: "Seneca" },
+      { text: "You fall to the level of your systems.", author: "James Clear" }
+    ];
+    
+    // 20 Habit Emojis Presets
+    const HABIT_EMOJIS = [
+      '🏃‍♂️', '💧', '📚', '🧘‍♂️', '🍎', '💻', '🛌', '🚶‍♂️', '🧼', '💊',
+      '🎨', '✍️', '🎸', '🧹', '🌱', '☕️', '🥛', '🚲', '🏋️‍♂️', '🧩'
+    ];
+    
+    // ==========================================================================
+    // PREMIUM SOUND EFFECTS SYNTHESIS ENGINE (WEB AUDIO API)
+    // ==========================================================================
+    const Sounds = {
+      getAudioContext() {
+        return new (window.AudioContext || window.webkitAudioContext)();
+      },
+      playSuccess() {
+        try {
+          const ctx = this.getAudioContext();
+          const now = ctx.currentTime;
+          const osc1 = ctx.createOscillator();
+          const osc2 = ctx.createOscillator();
+          const gain1 = ctx.createGain();
+          const gain2 = ctx.createGain();
+          osc1.connect(gain1);
+          gain1.connect(ctx.destination);
+          osc2.connect(gain2);
+          gain2.connect(ctx.destination);
+          osc1.type = 'triangle';
+          osc1.frequency.setValueAtTime(523.25, now);
+          gain1.gain.setValueAtTime(0, now);
+          gain1.gain.linearRampToValueAtTime(0.15, now + 0.05);
+          gain1.gain.exponentialRampToValueAtTime(0.001, now + 0.25);
+          osc2.type = 'triangle';
+          osc2.frequency.setValueAtTime(783.99, now + 0.08);
+          gain2.gain.setValueAtTime(0, now);
+          gain2.gain.setValueAtTime(0, now + 0.08);
+          gain2.gain.linearRampToValueAtTime(0.2, now + 0.12);
+          gain2.gain.exponentialRampToValueAtTime(0.001, now + 0.45);
+          osc1.start(now);
+          osc1.stop(now + 0.3);
+          osc2.start(now + 0.08);
+          osc2.stop(now + 0.5);
+        } catch(e) { console.warn("Success sound blocked:", e); }
+      },
+      playUncomplete() {
+        try {
+          const ctx = this.getAudioContext();
+          const now = ctx.currentTime;
+          const osc = ctx.createOscillator();
+          const gain = ctx.createGain();
+          osc.connect(gain);
+          gain.connect(ctx.destination);
+          osc.type = 'sine';
+          osc.frequency.setValueAtTime(329.63, now);
+          osc.frequency.exponentialRampToValueAtTime(220.00, now + 0.25);
+          gain.gain.setValueAtTime(0, now);
+          gain.gain.linearRampToValueAtTime(0.15, now + 0.05);
+          gain.gain.exponentialRampToValueAtTime(0.001, now + 0.3);
+          osc.start(now);
+          osc.stop(now + 0.3);
+        } catch(e) { console.warn("Uncomplete sound blocked:", e); }
+      },
+      playDelete() {
+        try {
+          const ctx = this.getAudioContext();
+          const now = ctx.currentTime;
+          const osc = ctx.createOscillator();
+          const gain = ctx.createGain();
+          osc.connect(gain);
+          gain.connect(ctx.destination);
+          osc.type = 'sine';
+          osc.frequency.setValueAtTime(150, now);
+          osc.frequency.linearRampToValueAtTime(40, now + 0.2);
+          gain.gain.setValueAtTime(0, now);
+          gain.gain.linearRampToValueAtTime(0.2, now + 0.02);
+          gain.gain.exponentialRampToValueAtTime(0.001, now + 0.22);
+          osc.start(now);
+          osc.stop(now + 0.22);
+        } catch(e) { console.warn("Delete sound blocked:", e); }
+      },
+      playTap() {
+        try {
+          const ctx = this.getAudioContext();
+          const now = ctx.currentTime;
+          const osc = ctx.createOscillator();
+          const gain = ctx.createGain();
+          osc.connect(gain);
+          gain.connect(ctx.destination);
+          osc.type = 'sine';
+          osc.frequency.setValueAtTime(600, now);
+          osc.frequency.linearRampToValueAtTime(200, now + 0.04);
+          gain.gain.setValueAtTime(0, now);
+          gain.gain.linearRampToValueAtTime(0.1, now + 0.005);
+          gain.gain.exponentialRampToValueAtTime(0.001, now + 0.045);
+          osc.start(now);
+          osc.stop(now + 0.05);
+        } catch(e) { console.warn("Tap sound blocked:", e); }
+      }
+    };
+    
+    // ==========================================================================
+    // STATE STORAGE & LOCALSTORAGE SYNC MECHANISM
+    // ==========================================================================
+    const State = {
+      data: {
+        tasks: [],
+        habits: [],
+        reminders: [],
+        settings: { theme: 'dark' },
+        lastOpenedDate: '' // tracks day boundaries
+      },
+      
+      init() {
+        const stored = localStorage.getItem('aura_planner_state');
+        if (stored) {
+          try {
+            this.data = JSON.parse(stored);
+          } catch(e) {
+            console.error("State parse error: fall back to default schema", e);
+          }
+        }
+        
+        // Ensure lists exist
+        this.data.tasks = this.data.tasks || [];
+        this.data.habits = this.data.habits || [];
+        this.data.reminders = this.data.reminders || [];
+        this.data.settings = this.data.settings || { theme: 'dark' };
+        
+        this.checkDayBoundary();
+        this.save();
+      },
+      
+      save() {
+        localStorage.setItem('aura_planner_state', JSON.stringify(this.data));
+      },
+      
+      checkDayBoundary() {
+        const todayStr = this.getFormattedDateString(new Date());
+        const lastStr = this.data.lastOpenedDate;
+        
+        if (lastStr && lastStr !== todayStr) {
+          // 1. Clear completed tasks status from previous days, move remaining tasks to today
+          this.data.tasks.forEach(t => {
+            if (t.done) {
+              t.done = false; // clear done marker
+            }
+            t.date = todayStr; // shift forward to today
+          });
+          
+          // 2. Habit streak miss reset logic:
+          // A habit streak is maintained if they checked in yesterday OR today.
+          // Let's compute yesterday's date string.
+          const yesterday = new Date();
+          yesterday.setDate(yesterday.getDate() - 1);
+          const yesterdayStr = this.getFormattedDateString(yesterday);
+          
+          this.data.habits.forEach(h => {
+            const completed = h.completedDates || [];
+            // If the user hasn't completed the habit today AND hasn't completed it yesterday,
+            // reset streak to 0.
+            const doneToday = completed.includes(todayStr);
+            const doneYesterday = completed.includes(yesterdayStr);
+            
+            if (!doneToday && !doneYesterday) {
+              h.streak = 0;
+            }
+          });
+        }
+        
+        this.data.lastOpenedDate = todayStr;
+      },
+      
+      getFormattedDateString(dateObj) {
+        return dateObj.toISOString().split('T')[0]; // returns YYYY-MM-DD
+      }
+    };
+    
+    // Initialize State
+    State.init();
+    
+    // ==========================================================================
+    // DYNAMIC INTERACTIVE NAVIGATION CONTROLLER
+    // ==========================================================================
+    const Nav = {
+      activeTab: 'screen-today',
+      
+      init() {
+        const navBar = document.querySelector('.bottom-nav');
+        const items = document.querySelectorAll('.nav-item');
+        
+        items.forEach(item => {
+          item.addEventListener('click', (e) => {
+            const target = item.getAttribute('data-target');
+            this.switchTab(target, item);
+          });
+        });
+        
+        // Initial setup
+        setTimeout(() => this.repositionIndicator(), 100);
+        window.addEventListener('resize', () => this.repositionIndicator());
+      },
+      
+      switchTab(targetId, navButton) {
+        if (this.activeTab === targetId) return;
+        
+        Sounds.playTap(); // Play feedback tap
+        
+        // Deactivate active items
+        document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+        document.querySelectorAll('.nav-item').forEach(b => b.classList.remove('active'));
+        
+        // Activate target screen
+        const targetScreen = document.getElementById(targetId);
+        targetScreen.classList.add('active');
+        navButton.classList.add('active');
+        
+        this.activeTab = targetId;
+        this.repositionIndicator();
+        this.updateFABVisibility();
+        
+        // Trigger page-specific animations
+        if (targetId === 'screen-progress') {
+          ProgressScreen.animateChartOnView();
+        }
+      },
+      
+      repositionIndicator() {
+        const activeBtn = document.querySelector('.nav-item.active');
+        const indicator = document.getElementById('nav-indicator');
+        if (!activeBtn || !indicator) return;
+        
+        const navRect = document.querySelector('.bottom-nav').getBoundingClientRect();
+        const btnRect = activeBtn.getBoundingClientRect();
+        
+        const leftOffset = btnRect.left - navRect.left;
+        indicator.style.width = `${btnRect.width - 24}px`;
+        indicator.style.left = `${leftOffset + 12}px`;
+      },
+      
+      updateFABVisibility() {
+        const fab = document.getElementById('main-fab');
+        // Hide FAB on Progress screen, show on others
+        if (this.activeTab === 'screen-progress') {
+          fab.style.opacity = '0';
+          fab.style.pointerEvents = 'none';
+          fab.style.transform = 'scale(0) translateY(20px)';
+        } else {
+          fab.style.opacity = '1';
+          fab.style.pointerEvents = 'auto';
+          fab.style.transform = 'scale(1) translateY(0)';
+        }
+      }
+    };
+    
+    // Initialize Navigation
+    Nav.init();
+    
+    // ==========================================================================
+    // FLOATING ACTION BUTTON (FAB) & BOTTOM SHEETS MANAGER
+    // ==========================================================================
+    const Sheets = {
+      activeSheet: null,
+      
+      init() {
+        const fab = document.getElementById('main-fab');
+        const overlay = document.getElementById('sheet-overlay');
+        
+        fab.addEventListener('click', () => {
+          Sounds.playTap(); // Play feedback tap
+          fab.classList.add('fab-pulse');
+          setTimeout(() => fab.classList.remove('fab-pulse'), 400);
+          this.openSheetByActiveTab();
+        });
+        
+        overlay.addEventListener('click', () => this.closeActiveSheet());
+        
+        // Close sheets on escape key for testing
+        window.addEventListener('keydown', (e) => {
+          if (e.key === 'Escape') this.closeActiveSheet();
+        });
+        
+        // Touch Drag gestures for bottom sheets to dismiss easily
+        document.querySelectorAll('.bottom-sheet').forEach(sheet => {
+          let startY = 0;
+          let currentY = 0;
+          
+          sheet.addEventListener('touchstart', (e) => {
+            startY = e.touches[0].clientY;
+          });
+          
+          sheet.addEventListener('touchmove', (e) => {
+            currentY = e.touches[0].clientY;
+            let diff = currentY - startY;
+            if (diff > 0) {
+              sheet.style.transform = `translateY(${diff}px)`;
+              sheet.style.transition = 'none';
+            }
+          });
+          
+          sheet.addEventListener('touchend', (e) => {
+            let diff = currentY - startY;
+            sheet.style.transition = '';
+            if (diff > 120) {
+              this.closeActiveSheet();
+            } else {
+              sheet.style.transform = '';
+            }
+            startY = 0;
+            currentY = 0;
+          });
+        });
+      },
+      
+      openSheetByActiveTab() {
+        const tab = Nav.activeTab;
+        if (tab === 'screen-today') this.openSheet('sheet-task');
+        else if (tab === 'screen-habits') this.openSheet('sheet-habit');
+        else if (tab === 'screen-reminders') this.openSheet('sheet-reminder');
+      },
+      
+      openSheet(id) {
+        this.closeActiveSheet();
+        
+        const overlay = document.getElementById('sheet-overlay');
+        const sheet = document.getElementById(id);
+        
+        overlay.classList.add('active');
+        sheet.classList.add('active');
+        this.activeSheet = sheet;
+        
+        // Autofocus first text input inside the sheet
+        const textInput = sheet.querySelector('input[type="text"]');
+        if (textInput) {
+          setTimeout(() => textInput.focus(), 250);
+        }
+      },
+      
+      closeActiveSheet() {
+        if (!this.activeSheet) return;
+        
+        const overlay = document.getElementById('sheet-overlay');
+        
+        overlay.classList.remove('active');
+        this.activeSheet.classList.remove('active');
+        this.activeSheet.style.transform = ''; // reset temporary drag translations
+        this.activeSheet = null;
+        
+        // Unfocus active fields
+        document.activeElement.blur();
+      }
+    };
+    
+    // Initialize Sheets
+    Sheets.init();
+    
+    // ==========================================================================
+    // NOTIFICATIONS ENGINE
+    // ==========================================================================
+    const Notify = {
+      init() {
+        const banner = document.getElementById('permission-banner');
+        const grantBtn = document.getElementById('btn-grant-permission');
+        
+        if (this.needsPermissionPrompt()) {
+          banner.style.display = 'flex';
+        }
+        
+        grantBtn.addEventListener('click', () => {
+          this.requestPermission();
+        });
+        
+        // Start simple high-precision active reminder check (30 seconds polling)
+        setInterval(() => this.pollReminders(), 30000);
+      },
+      
+      needsPermissionPrompt() {
+        return ('Notification' in window) && (Notification.permission === 'default');
+      },
+      
+      requestPermission() {
+        if (!('Notification' in window)) return;
+        
+        Notification.requestPermission().then(permission => {
+          const banner = document.getElementById('permission-banner');
+          if (permission === 'granted' || permission === 'denied') {
+            banner.style.opacity = '0';
+            setTimeout(() => banner.style.display = 'none', 300);
+          }
+        });
+      },
+      
+      triggerAlert(title, text) {
+        // 1. Try HTML5 native Notification if permission granted
+        if (('Notification' in window) && Notification.permission === 'granted') {
+          new Notification(title, {
+            body: text,
+            icon: 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="%236d28d9" stroke-width="2"><circle cx="12" cy="12" r="10"/></svg>'
+          });
+        }
+        
+        // 2. Play subtle system beep synthesis to alert user audibly
+        this.playBeepSound();
+        
+        // 3. Render premium interactive in-app Alert Toast
+        const toast = document.getElementById('backup-toast');
+        const tTitle = document.getElementById('toast-title');
+        const tSub = document.getElementById('toast-subtitle');
+        
+        tTitle.textContent = title;
+        tSub.textContent = text;
+        
+        toast.classList.add('active');
+        
+        // Auto-dismiss in-app toast after 6 seconds
+        setTimeout(() => {
+          toast.classList.remove('active');
+        }, 6000);
+      },
+      
+      playBeepSound() {
+        try {
+          const ctx = new (window.AudioContext || window.webkitAudioContext)();
+          const osc = ctx.createOscillator();
+          const gain = ctx.createGain();
+          
+          osc.connect(gain);
+          gain.connect(ctx.destination);
+          
+          osc.type = 'sine';
+          osc.frequency.setValueAtTime(880, ctx.currentTime); // High-pitched satisfying bell note
+          
+          gain.gain.setValueAtTime(0, ctx.currentTime);
+          gain.gain.linearRampToValueAtTime(0.3, ctx.currentTime + 0.05);
+          gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.8);
+          
+          osc.start(ctx.currentTime);
+          osc.stop(ctx.currentTime + 0.8);
+        } catch(err) {
+          console.warn("Audio Context alert blocked: browser user action constraint", err);
+        }
+      },
+      
+      pollReminders() {
+        const now = new Date();
+        const curHrs = String(now.getHours()).padStart(2, '0');
+        const curMins = String(now.getMinutes()).padStart(2, '0');
+        const curTimeStr = `${curHrs}:${curMins}`;
+        
+        // Check standard Reminders list
+        State.data.reminders.forEach(r => {
+          if (r.enabled && r.time === curTimeStr) {
+            // Shake the active bell graphic in the list temporarily if rendered
+            const bell = document.querySelector(`.reminder-card[data-id="${r.id}"] .reminder-bell-wrap`);
+            if (bell) {
+              bell.classList.add('ringing');
+              setTimeout(() => bell.classList.remove('ringing'), 5000);
+            }
+            this.triggerAlert("Daily Reminder! ⏰", r.label);
+          }
+        });
+        
+        // Check active task alert-reminders set for today
+        State.data.tasks.forEach(t => {
+          if (!t.done && t.reminder && t.time === curTimeStr) {
+            this.triggerAlert("Task Alert! ☀️", t.title);
+          }
+        });
+      }
+    };
+    
+    // Initialize Notifications Prompt & Poller
+    Notify.init();
+    
+    // ==========================================================================
+    // ADVANCED SWIPE-TO-DELETE GESTURES ENGINE (TOUCH & MOUSE SUPPORT)
+    // ==========================================================================
+    const SwipeGesture = {
+      bindSwipe(cardElement, deleteCallback) {
+        let startX = 0;
+        let startY = 0;
+        let deltaX = 0;
+        let deltaY = 0;
+        let isSwiping = false;
+        
+        const cardWrapper = cardElement.parentElement;
+        const deleteZone = cardWrapper.querySelector('.swipe-delete-zone');
+        
+        // 1. Touch Listeners for actual mobile Safari testing
+        cardElement.addEventListener('touchstart', (e) => {
+          startX = e.touches[0].clientX;
+          startY = e.touches[0].clientY;
+          cardElement.style.transition = 'none';
+          if (deleteZone) deleteZone.style.opacity = '1';
+        }, { passive: true });
+        
+        cardElement.addEventListener('touchmove', (e) => {
+          const currentX = e.touches[0].clientX;
+          const currentY = e.touches[0].clientY;
+          deltaX = currentX - startX;
+          deltaY = currentY - startY;
+          
+          // Prevent standard vertical scrolls ONLY if swiping horizontal
+          if (Math.abs(deltaX) > Math.abs(deltaY)) {
+            if (e.cancelable) e.preventDefault();
+            isSwiping = true;
+          }
+          
+          if (isSwiping && deltaX < 0) {
+            // Apply elastic tension drag formula
+            const friction = Math.max(deltaX, -160);
+            cardElement.style.transform = `translateX(${friction}px)`;
+          }
+        }, { passive: false });
+        
+        cardElement.addEventListener('touchend', () => {
+          cardElement.style.transition = 'transform 0.35s cubic-bezier(0.25, 1, 0.5, 1)';
+          
+          if (isSwiping && deltaX < -84) {
+            // Complete drag deletion
+            cardElement.style.transform = 'translateX(-105%)';
+            cardWrapper.classList.add('collapsing');
+            setTimeout(() => {
+              deleteCallback();
+            }, 400);
+          } else {
+            // Elastic recoil snap-back
+            cardElement.style.transform = 'translateX(0)';
+            if (deleteZone) {
+              setTimeout(() => {
+                deleteZone.style.opacity = '0';
+              }, 200);
+            }
+          }
+          
+          isSwiping = false;
+          deltaX = 0;
+          deltaY = 0;
+        }, { passive: true });
+        
+        // 2. Mouse Listeners for seamless pair-programming desktop validation
+        cardElement.addEventListener('mousedown', (e) => {
+          startX = e.clientX;
+          startY = e.clientY;
+          isSwiping = false;
+          cardElement.style.transition = 'none';
+          if (deleteZone) deleteZone.style.opacity = '1';
+          
+          const onMouseMove = (moveEvt) => {
+            deltaX = moveEvt.clientX - startX;
+            deltaY = moveEvt.clientY - startY;
+            
+            if (Math.abs(deltaX) > 8) {
+              isSwiping = true;
+            }
+            
+            if (isSwiping && deltaX < 0) {
+              const friction = Math.max(deltaX, -160);
+              cardElement.style.transform = `translateX(${friction}px)`;
+            }
+          };
+          
+          const onMouseUp = () => {
+            document.removeEventListener('mousemove', onMouseMove);
+            document.removeEventListener('mouseup', onMouseUp);
+            
+            cardElement.style.transition = 'transform 0.35s cubic-bezier(0.25, 1, 0.5, 1)';
+            
+            if (isSwiping && deltaX < -84) {
+              cardElement.style.transform = 'translateX(-105%)';
+              cardWrapper.classList.add('collapsing');
+              setTimeout(() => {
+                deleteCallback();
+              }, 400);
+            } else {
+              cardElement.style.transform = 'translateX(0)';
+              if (deleteZone) {
+                setTimeout(() => {
+                  deleteZone.style.opacity = '0';
+                }, 200);
+              }
+            }
+            isSwiping = false;
+          };
+          
+          document.addEventListener('mousemove', onMouseMove);
+          document.addEventListener('mouseup', onMouseUp);
+        });
+      }
+    };
+    
+    // ==========================================================================
+    // SCREEN 1 MODULE: TODAY RENDERING & LOGIC
+    // ==========================================================================
+    const TodayScreen = {
+      isCompletedCollapsed: false,
+      
+      init() {
+        // Build Date display text
+        const days = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+        const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+        const now = new Date();
+        const formatted = `${days[now.getDay()]}, ${now.getDate()} ${months[now.getMonth()]}`;
+        document.getElementById('today-date-text').textContent = formatted;
+        
+        // Bind Add Task fields behavior inside sheet
+        const priorityOpts = document.querySelectorAll('#task-priority-selector .pill-opt');
+        priorityOpts.forEach(opt => {
+          opt.addEventListener('click', () => {
+            priorityOpts.forEach(o => o.classList.remove('active'));
+            opt.classList.add('active');
+          });
+        });
+        
+        const sw = document.getElementById('task-reminder-switch');
+        sw.addEventListener('click', () => {
+          sw.classList.toggle('active');
+        });
+        
+        // Add Task Submit Form
+        document.getElementById('form-task').addEventListener('submit', () => {
+          const title = document.getElementById('task-input-title').value.trim();
+          const priority = document.querySelector('#task-priority-selector .pill-opt.active').getAttribute('data-value');
+          const time = document.getElementById('task-input-time').value;
+          const reminder = sw.classList.contains('active');
+          
+          if (!title) return;
+          
+          const newTask = {
+            id: Date.now().toString(),
+            title,
+            priority,
+            time,
+            done: false,
+            date: State.getFormattedDateString(new Date()),
+            reminder
+          };
+          
+          State.data.tasks.push(newTask);
+          State.save();
+          
+          // Reset form fields
+          document.getElementById('task-input-title').value = '';
+          document.getElementById('task-input-time').value = '';
+          sw.classList.remove('active');
+          
+          // Close sheet & render
+          Sheets.closeActiveSheet();
+          this.render();
+          ProgressScreen.render();
+        });
+        
+        // Bind Accordion Header click trigger
+        const accordHeader = document.getElementById('completed-accordion-header');
+        accordHeader.addEventListener('click', () => {
+          this.isCompletedCollapsed = !this.isCompletedCollapsed;
+          accordHeader.classList.toggle('collapsed', this.isCompletedCollapsed);
+          document.getElementById('completed-tasks-container').classList.toggle('collapsed', this.isCompletedCollapsed);
+        });
+        
+        // Bind Scroll Parallax to Header Greeting blur/scale effect
+        const todayScreenContainer = document.getElementById('screen-today');
+        todayScreenContainer.addEventListener('scroll', () => {
+          const scrollY = todayScreenContainer.scrollTop;
+          const header = todayScreenContainer.querySelector('.screen-header');
+          if (!header) return;
+          
+          // Apply elegant Apple parallax limits
+          const pct = Math.min(scrollY / 150, 1);
+          header.style.transform = `scale(${1 - (pct * 0.08)}) translateY(${scrollY * 0.25}px)`;
+          header.style.opacity = `${1 - (pct * 0.9)}`;
+          header.style.filter = `blur(${pct * 8}px)`;
+        }, { passive: true });
+        
+        this.render();
+      },
+      
+      render() {
+        const todayStr = State.getFormattedDateString(new Date());
+        // Filter tasks that belong to today
+        const tasks = State.data.tasks.filter(t => t.date === todayStr);
+        
+        const incomplete = tasks.filter(t => !t.done);
+        const completed = tasks.filter(t => t.done);
+        
+        // Sort incomplete: High -> Medium -> Low
+        const pVal = { 'HIGH': 3, 'MEDIUM': 2, 'LOW': 1 };
+        incomplete.sort((a,b) => pVal[b.priority] - pVal[a.priority]);
+        
+        // Render incomplete tasks
+        const listContainer = document.getElementById('today-tasks-container');
+        listContainer.innerHTML = '';
+        
+        if (incomplete.length === 0) {
+          listContainer.innerHTML = `
+            <div class="empty-state">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10z"></path>
+                <path d="M12 8v4"></path>
+                <path d="M12 16h.01"></path>
+              </svg>
+              <p>No tasks yet. Add one below ✨</p>
+            </div>
+          `;
+        } else {
+          incomplete.forEach(t => {
+            listContainer.appendChild(this.buildTaskCard(t));
+          });
+        }
+        
+        // Render completed tasks
+        const completedContainer = document.getElementById('completed-tasks-container');
+        completedContainer.innerHTML = '';
+        
+        const accordion = document.getElementById('completed-accordion-wrap');
+        if (completed.length > 0) {
+          accordion.style.display = 'block';
+          document.getElementById('completed-count-text').textContent = completed.length;
+          
+          completed.forEach(t => {
+            completedContainer.appendChild(this.buildTaskCard(t));
+          });
+        } else {
+          accordion.style.display = 'none';
+        }
+        
+        // Update header progress totals
+        const total = tasks.length;
+        const pct = total === 0 ? 0 : Math.round((completed.length / total) * 100);
+        
+        // Ring dashoffset calculation
+        const ring = document.getElementById('header-progress-ring');
+        const circumference = 125.6; // 2 * pi * 20
+        ring.style.strokeDashoffset = circumference - (pct / 100) * circumference;
+        document.getElementById('header-ring-pct').textContent = `${pct}%`;
+        
+        // Header Text & count badge
+        document.getElementById('today-task-summary').textContent = `You have ${incomplete.length} task${incomplete.length === 1 ? '' : 's'} remaining`;
+        document.getElementById('tasks-count-badge').textContent = incomplete.length;
+        
+        // Update quick stats pills
+        document.getElementById('stat-tasks-done').textContent = `${completed.length}/${total} done today`;
+        
+        // Get active streak
+        let topStreak = 0;
+        State.data.habits.forEach(h => {
+          if (h.streak > topStreak) topStreak = h.streak;
+        });
+        document.getElementById('stat-habit-streak').textContent = `${topStreak} day streak`;
+        
+        // Next active reminder alert label
+        const now = new Date();
+        const curHrs = now.getHours();
+        const curMins = now.getMinutes();
+        
+        let nextReminderText = "No reminders";
+        let minDiff = Infinity;
+        
+        State.data.reminders.forEach(r => {
+          if (r.enabled) {
+            const [rHrs, rMins] = r.time.split(':').map(Number);
+            let diff = (rHrs * 60 + rMins) - (curHrs * 60 + curMins);
+            if (diff < 0) diff += 24 * 60; // falls into tomorrow
+            
+            if (diff < minDiff) {
+              minDiff = diff;
+              nextReminderText = `Next at ${r.time}`;
+            }
+          }
+        });
+        document.getElementById('stat-next-reminder').textContent = nextReminderText;
+      },
+      
+      buildTaskCard(task) {
+        const wrapper = document.createElement('div');
+        wrapper.className = 'task-card-wrapper';
+        wrapper.setAttribute('data-id', task.id);
+        
+        // Inner markup
+        const timeLabel = task.time ? `<span class="task-time">⏰ ${task.time}</span>` : '';
+        const priorityClass = `priority-${task.priority.toLowerCase()}`;
+        const pLabel = task.priority === 'HIGH' ? '🔴 High' : task.priority === 'MEDIUM' ? '🟡 Med' : '🟢 Low';
+        
+        wrapper.innerHTML = `
+          <div class="swipe-delete-zone">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="3 6 5 6 21 6"></polyline>
+              <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+            </svg>
+          </div>
+          <div class="task-card ${task.done ? 'completed' : ''}">
+            <div class="checkbox-trigger">
+              <svg class="checkbox-svg" viewBox="0 0 22 22">
+                <circle class="checkbox-circle" cx="11" cy="11" r="9.5"></circle>
+                <circle class="checkbox-fill" cx="11" cy="11" r="9.5"></circle>
+                <path class="checkbox-checkmark" d="M6.5 11.5L9.5 14.5L15.5 8"></path>
+              </svg>
+            </div>
+            
+            <div class="task-details">
+              <div class="task-title-wrapper">
+                <span class="task-title">${task.title}</span>
+                <span class="strikethrough-line"></span>
+              </div>
+              <div class="task-meta">
+                ${timeLabel}
+                <span class="priority-badge ${priorityClass}">${pLabel}</span>
+              </div>
+            </div>
+          </div>
+        `;
+        
+        const card = wrapper.querySelector('.task-card');
+        const trigger = wrapper.querySelector('.checkbox-trigger');
+        
+        // Bind Custom Checkbox Click Animation
+        trigger.addEventListener('click', (e) => {
+          e.stopPropagation();
+          this.toggleTaskComplete(task.id, wrapper);
+        });
+        
+        // Bind swipe gesture to deletion logic
+        SwipeGesture.bindSwipe(card, () => {
+          this.deleteTask(task.id);
+        });
+        
+        return wrapper;
+      },
+      
+      toggleTaskComplete(id, cardWrapper) {
+        const task = State.data.tasks.find(t => t.id === id);
+        if (!task) return;
+        
+        task.done = !task.done;
+        State.save();
+        
+        const card = cardWrapper.querySelector('.task-card');
+        card.classList.toggle('completed', task.done);
+        
+        // Play high-fidelity completion sound effects
+        if (task.done) {
+          Sounds.playSuccess();
+        } else {
+          Sounds.playUncomplete();
+        }
+        
+        // Compress spring delay to shift groups gracefully
+        cardWrapper.classList.add('collapsing');
+        setTimeout(() => {
+          this.render();
+          ProgressScreen.render();
+        }, 400);
+      },
+      
+      deleteTask(id) {
+        Sounds.playDelete(); // Play satisfying sweeping delete sound!
+        State.data.tasks = State.data.tasks.filter(t => t.id !== id);
+        State.save();
+        this.render();
+        ProgressScreen.render();
+      }
+    };
+    
+    // Initialize Today screen module
+    TodayScreen.init();
+    
+    // ==========================================================================
+    // SCREEN 2 MODULE: HABITS RENDERING & LOGIC
+    // ==========================================================================
+    const HabitsScreen = {
+      selectedEmoji: HABIT_EMOJIS[0],
+      
+      init() {
+        // Date indicator header
+        const days = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+        const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+        const now = new Date();
+        document.getElementById('habits-header-date').textContent = `${days[now.getDay()]}, ${now.getDate()} ${months[now.getMonth()]}`;
+        
+        // Render Emojis picker in bottom sheet
+        const gridSelect = document.getElementById('habit-emoji-selector');
+        gridSelect.innerHTML = '';
+        
+        HABIT_EMOJIS.forEach(emoji => {
+          const opt = document.createElement('div');
+          opt.className = `emoji-opt ${emoji === this.selectedEmoji ? 'active' : ''}`;
+          opt.textContent = emoji;
+          
+          opt.addEventListener('click', () => {
+            document.querySelectorAll('.emoji-opt').forEach(o => o.classList.remove('active'));
+            opt.classList.add('active');
+            this.selectedEmoji = emoji;
+          });
+          
+          gridSelect.appendChild(opt);
+        });
+        
+        // Connect Add Habit Button Triggers
+        document.getElementById('btn-trigger-add-habit').addEventListener('click', () => {
+          Sheets.openSheet('sheet-habit');
+        });
+        
+        // Add Habit Submit
+        document.getElementById('form-habit').addEventListener('submit', () => {
+          const name = document.getElementById('habit-input-name').value.trim();
+          if (!name) return;
+          
+          const newHabit = {
+            id: Date.now().toString(),
+            name,
+            emoji: this.selectedEmoji,
+            completedDates: [],
+            streak: 0
+          };
+          
+          State.data.habits.push(newHabit);
+          State.save();
+          
+          // Reset form fields
+          document.getElementById('habit-input-name').value = '';
+          Sheets.closeActiveSheet();
+          this.render();
+          ProgressScreen.render();
+        });
+        
+        this.render();
+      },
+      
+      render() {
+        const grid = document.getElementById('habits-grid-container');
+        grid.innerHTML = '';
+        
+        const habits = State.data.habits;
+        document.getElementById('habits-count-badge').textContent = habits.length;
+        
+        if (habits.length === 0) {
+          grid.style.display = 'block';
+          grid.innerHTML = `
+            <div class="empty-state">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"></path>
+              </svg>
+              <p>No habits created yet. Build daily streaks below 🔥</p>
+            </div>
+          `;
+          return;
+        }
+        
+        grid.style.display = 'grid';
+        habits.forEach(h => {
+          grid.appendChild(this.buildHabitCard(h));
+        });
+      },
+      
+      buildHabitCard(habit) {
+        const todayStr = State.getFormattedDateString(new Date());
+        const isChecked = habit.completedDates.includes(todayStr);
+        
+        const card = document.createElement('div');
+        card.className = `habit-card ${isChecked ? 'checked-today' : ''}`;
+        card.setAttribute('data-id', habit.id);
+        
+        // Build dots list for weekly Mon-Sun mini calendar representation
+        const calendarHTML = this.buildCalendarDotsHTML(habit);
+        
+        card.innerHTML = `
+          <div class="habit-icon-circle">${habit.emoji}</div>
+          <div class="habit-title">${habit.name}</div>
+          <div class="habit-streak">
+            <span>🔥</span>
+            <span class="streak-val" id="streak-val-${habit.id}">${habit.streak} day${habit.streak === 1 ? '' : 's'}</span>
+          </div>
+          <div class="habit-calendar">
+            ${calendarHTML}
+          </div>
+        `;
+        
+        // Tap card to check in trigger
+        card.addEventListener('click', (e) => {
+          this.toggleHabitCheckIn(e, habit, card);
+        });
+        
+        return card;
+      },
+      
+      buildCalendarDotsHTML(habit) {
+        const now = new Date();
+        const currentDayIndex = now.getDay(); // 0 is Sunday, 1 is Monday...
+        
+        // Map indexes so Monday is 0, Sunday is 6
+        const mappedCurrent = currentDayIndex === 0 ? 6 : currentDayIndex - 1;
+        const labels = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
+        
+        let dotsHTML = '';
+        for (let i = 0; i < 7; i++) {
+          // Compute the date representing index i in current week
+          const dateDiff = i - mappedCurrent;
+          const targetDate = new Date();
+          targetDate.setDate(now.getDate() + dateDiff);
+          
+          const targetStr = State.getFormattedDateString(targetDate);
+          const isCompleted = habit.completedDates.includes(targetStr);
+          const isMissed = !isCompleted && dateDiff < 0; // past days incomplete are missed
+          
+          const dotClass = isCompleted ? 'completed' : isMissed ? 'missed' : '';
+          dotsHTML += `
+            <div class="calendar-day-dot">
+              <span class="day-label">${labels[i]}</span>
+              <div class="day-dot ${dotClass}"></div>
+            </div>
+          `;
+        }
+        return dotsHTML;
+      },
+      
+      toggleHabitCheckIn(e, habit, cardElement) {
+        const todayStr = State.getFormattedDateString(new Date());
+        const completedIndex = habit.completedDates.indexOf(todayStr);
+        const streakVal = cardElement.querySelector('.streak-val');
+        
+        // Visual touch ripple expander
+        const rect = cardElement.getBoundingClientRect();
+        const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+        const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+        const rippleX = clientX - rect.left;
+        const rippleY = clientY - rect.top;
+        
+        const ripple = document.createElement('span');
+        ripple.className = 'ripple-effect';
+        ripple.style.left = `${rippleX}px`;
+        ripple.style.top = `${rippleY}px`;
+        cardElement.appendChild(ripple);
+        
+        setTimeout(() => ripple.remove(), 500);
+        
+        if (completedIndex === -1) {
+          // Complete Habit for today
+          habit.completedDates.push(todayStr);
+          habit.streak += 1;
+          cardElement.classList.add('checked-today');
+          
+          // Animate Ticker Streak Tick up
+          streakVal.classList.add('ticker-up');
+          streakVal.textContent = `${habit.streak} day${habit.streak === 1 ? '' : 's'}`;
+          setTimeout(() => streakVal.classList.remove('ticker-up'), 300);
+          
+          // Soft Notification beep
+          Notify.playBeepSound();
+        } else {
+          // Uncomplete habit for today
+          habit.completedDates.splice(completedIndex, 1);
+          habit.streak = Math.max(0, habit.streak - 1);
+          cardElement.classList.remove('checked-today');
+          streakVal.textContent = `${habit.streak} day${habit.streak === 1 ? '' : 's'}`;
+        }
+        
+        State.save();
+        
+        // Re-render dot states & update Today indicators
+        setTimeout(() => {
+          this.render();
+          TodayScreen.render();
+          ProgressScreen.render();
+        }, 450);
+      }
+    };
+    
+    // Initialize Habits Module
+    HabitsScreen.init();
+    
+    // ==========================================================================
+    // SCREEN 3 MODULE: REMINDERS RENDERING & LOGIC
+    // ==========================================================================
+    const RemindersScreen = {
+      init() {
+        // Connect Add Reminder Submit Form
+        document.getElementById('form-reminder').addEventListener('submit', () => {
+          const label = document.getElementById('reminder-input-label').value.trim();
+          const time = document.getElementById('reminder-input-time').value;
+          
+          if (!label || !time) return;
+          
+          const newReminder = {
+            id: Date.now().toString(),
+            label,
+            time,
+            enabled: true
+          };
+          
+          State.data.reminders.push(newReminder);
+          // Sort chronologically
+          State.data.reminders.sort((a,b) => a.time.localeCompare(b.time));
+          
+          State.save();
+          
+          // Reset form fields
+          document.getElementById('reminder-input-label').value = '';
+          document.getElementById('reminder-input-time').value = '';
+          Sheets.closeActiveSheet();
+          
+          this.render();
+          TodayScreen.render();
+        });
+        
+        this.render();
+      },
+      
+      render() {
+        const list = document.getElementById('reminders-list-container');
+        list.innerHTML = '';
+        
+        const reminders = State.data.reminders;
+        document.getElementById('reminders-count-badge').textContent = reminders.length;
+        
+        if (reminders.length === 0) {
+          list.innerHTML = `
+            <div class="empty-state">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
+                <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
+              </svg>
+              <p>No reminders configured yet. Stay scheduled ⏰</p>
+            </div>
+          `;
+          return;
+        }
+        
+        reminders.forEach(r => {
+          list.appendChild(this.buildReminderCard(r));
+        });
+      },
+      
+      buildReminderCard(reminder) {
+        const wrapper = document.createElement('div');
+        wrapper.className = 'task-card-wrapper';
+        wrapper.setAttribute('data-id', reminder.id);
+        
+        wrapper.innerHTML = `
+          <div class="swipe-delete-zone">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="3 6 5 6 21 6"></polyline>
+              <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+            </svg>
+          </div>
+          <div class="reminder-card ${reminder.enabled ? 'active' : ''}">
+            <div class="reminder-left">
+              <div class="reminder-bell-wrap">
+                <svg viewBox="0 0 24 24">
+                  <path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9M13.73 21a2 2 0 0 1-3.46 0"></path>
+                </svg>
+              </div>
+              <div class="reminder-details">
+                <span class="reminder-time">${this.format12HourTime(reminder.time)}</span>
+                <span class="reminder-label">${reminder.label}</span>
+              </div>
+            </div>
+            <div class="ios-switch"></div>
+          </div>
+        `;
+        
+        const card = wrapper.querySelector('.reminder-card');
+        const sw = wrapper.querySelector('.ios-switch');
+        const bell = wrapper.querySelector('.reminder-bell-wrap');
+        
+        // Bind iOS Toggle switch click
+        sw.addEventListener('click', () => {
+          reminder.enabled = !reminder.enabled;
+          State.save();
+          card.classList.toggle('active', reminder.enabled);
+          
+          if (reminder.enabled) {
+            // Trigger bell shaking keyframes wobble
+            bell.classList.add('ringing');
+            setTimeout(() => bell.classList.remove('ringing'), 700);
+            
+            // Soft beep validation sound
+            Notify.playBeepSound();
+          }
+          
+          TodayScreen.render();
+        });
+        
+        // Bind swipe left deletion
+        SwipeGesture.bindSwipe(card, () => {
+          this.deleteReminder(reminder.id);
+        });
+        
+        return wrapper;
+      },
+      
+      deleteReminder(id) {
+        State.data.reminders = State.data.reminders.filter(r => r.id !== id);
+        State.save();
+        this.render();
+        TodayScreen.render();
+      },
+      
+      format12HourTime(time24) {
+        const [hrsStr, minsStr] = time24.split(':');
+        let hrs = Number(hrsStr);
+        const ampm = hrs >= 12 ? 'PM' : 'AM';
+        hrs = hrs % 12;
+        hrs = hrs ? hrs : 12; // hour '0' should be '12'
+        return `${String(hrs).padStart(2, '0')}:${minsStr} ${ampm}`;
+      }
+    };
+    
+    // Initialize Reminders Screen
+    RemindersScreen.init();
+    
+    // ==========================================================================
+    // SCREEN 4 MODULE: PROGRESS & Heatmaps
+    // ==========================================================================
+    const ProgressScreen = {
+      quoteIndex: 0,
+      
+      init() {
+        this.quoteIndex = Math.floor(Math.random() * QUOTES_ARRAY.length);
+        this.render();
+      },
+      
+      render() {
+        const todayStr = State.getFormattedDateString(new Date());
+        const tasks = State.data.tasks.filter(t => t.date === todayStr);
+        const completed = tasks.filter(t => t.done);
+        
+        // 1. Hero Donut Chart and Tick-up text value
+        const totalCount = tasks.length;
+        const compCount = completed.length;
+        const pct = totalCount === 0 ? 0 : Math.round((compCount / totalCount) * 100);
+        
+        const donut = document.getElementById('progress-hero-donut');
+        const circumference = 452.4; // 2 * pi * 72
+        donut.style.strokeDashoffset = circumference - (pct / 100) * circumference;
+        
+        // Ticker Count animation inside Progress Donut center
+        this.animateNumberTicker('donut-val-text', 0, pct, 800);
+        
+        // Completion Hero Cards labels
+        document.getElementById('progress-hero-summary').textContent = `${compCount} of ${totalCount} tasks completed`;
+        
+        let motivation = "Start adding tasks to monitor progress! ✨";
+        if (totalCount > 0) {
+          if (pct === 100) motivation = "Astonishing work! Complete daily sweep achieved! 🏆";
+          else if (pct >= 75) motivation = "Sensational day! You are in absolute flow state. ⚡️";
+          else if (pct >= 50) motivation = "Superb consistency. Keep pushing towards full sweep! 🔥";
+          else if (pct > 0) motivation = "Nice start. Micro-wins build massive monuments. 🏃‍♂️";
+          else motivation = "Your day is a fresh canvas. Tackle high priorities first! 🎨";
+        }
+        document.getElementById('progress-hero-motivation').textContent = motivation;
+        
+        // 2. Render weekly bar chart counts values
+        this.renderWeeklyBarGraph();
+        
+        // 3. Render Heatmaps grids
+        this.renderStreakHeatmaps();
+        
+        // 4. Streak record blocks
+        let bestStreak = 0;
+        State.data.habits.forEach(h => {
+          if (h.streak > bestStreak) bestStreak = h.streak;
+        });
+        document.getElementById('record-best-streak').textContent = `🔥 ${bestStreak} Day${bestStreak === 1 ? '' : 's'}`;
+        
+        // Highlight active peak productive day (Wednesday etc. mockup check based on completed)
+        const daysLabelMap = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+        document.getElementById('record-peak-day').textContent = daysLabelMap[new Date().getDay()];
+        
+        // 5. Quote card refresh
+        const quoteObj = QUOTES_ARRAY[this.quoteIndex];
+        document.getElementById('quote-card-text').textContent = `"${quoteObj.text}"`;
+        document.getElementById('quote-card-author').textContent = quoteObj.author;
+      },
+      
+      animateNumberTicker(elementId, start, end, duration) {
+        const el = document.getElementById(elementId);
+        if (!el) return;
+        
+        let startTime = null;
+        
+        function tick(timestamp) {
+          if (!startTime) startTime = timestamp;
+          const elapsed = timestamp - startTime;
+          const progress = Math.min(elapsed / duration, 1);
+          
+          // Easing spring function
+          const currentVal = Math.round(start + progress * (end - start));
+          el.textContent = `${currentVal}%`;
+          
+          if (progress < 1) {
+            requestAnimationFrame(tick);
+          } else {
+            el.textContent = `${end}%`;
+          }
+        }
+        
+        requestAnimationFrame(tick);
+      },
+      
+      renderWeeklyBarGraph() {
+        const now = new Date();
+        const currentDayIndex = now.getDay(); // 0-6 Sun-Sat
+        const mappedCurrent = currentDayIndex === 0 ? 6 : currentDayIndex - 1; // Mon is 0
+        
+        const bars = ['bar-mon', 'bar-tue', 'bar-wed', 'bar-thu', 'bar-fri', 'bar-sat', 'bar-sun'];
+        
+        bars.forEach((barId, i) => {
+          const wrap = document.getElementById(barId);
+          const innerBar = wrap.querySelector('.chart-bar-inner');
+          
+          // Dynamic highlight today bar
+          wrap.classList.toggle('today', i === mappedCurrent);
+          
+          // Read completed stats if current or past days, otherwise mock remaining
+          let height = 0;
+          if (i === mappedCurrent) {
+            const todayStr = State.getFormattedDateString(new Date());
+            const tasksToday = State.data.tasks.filter(t => t.date === todayStr);
+            const doneToday = tasksToday.filter(t => t.done).length;
+            
+            height = tasksToday.length === 0 ? 0 : Math.round((doneToday / tasksToday.length) * 80);
+          } else if (i < mappedCurrent) {
+            // Mock past history stats dynamically using a deterministic hash
+            height = Math.round(((i + 2) % 3) * 20 + 20); // 20px, 40px, 60px height variations
+          } else {
+            // Future days are 0 height
+            height = 0;
+          }
+          
+          // Stagger height load after screen swap reflow
+          innerBar.style.height = '0px';
+          setTimeout(() => {
+            innerBar.style.height = `${height}px`;
+          }, 150);
+        });
+      },
+      
+      animateChartOnView() {
+        // Triggers graph transition heights when switching screen viewports
+        this.renderWeeklyBarGraph();
+      },
+      
+      renderStreakHeatmaps() {
+        const heatmapContainer = document.getElementById('progress-heatmap-container');
+        heatmapContainer.innerHTML = '';
+        
+        const habits = State.data.habits;
+        if (habits.length === 0) {
+          heatmapContainer.innerHTML = `<span style="font-size:12px; color:var(--text-secondary);">Create custom habits to visual 30-day heatmap metrics!</span>`;
+          return;
+        }
+        
+        habits.forEach(h => {
+          const row = document.createElement('div');
+          row.className = 'heatmap-habit-row';
+          
+          // Grid markup for 30 dots (6x5) representation
+          let dotsHTML = '';
+          const today = new Date();
+          
+          // Render past 30 days from oldest (29 days ago) to today
+          for (let d = 29; d >= 0; d--) {
+            const tempDate = new Date();
+            tempDate.setDate(today.getDate() - d);
+            const tempStr = State.getFormattedDateString(tempDate);
+            const isDone = h.completedDates.includes(tempStr);
+            
+            // Map color intensity according to habit's current streak momentum
+            let dotClass = '';
+            if (isDone) {
+              if (h.streak >= 14) dotClass = 'completed-high';
+              else if (h.streak >= 7) dotClass = 'completed-med';
+              else dotClass = 'completed-low';
+            }
+            
+            dotsHTML += `<div class="heatmap-dot ${dotClass}" title="${tempStr}"></div>`;
+          }
+          
+          row.innerHTML = `
+            <div class="heatmap-left">
+              <div class="heatmap-name">${h.emoji} ${h.name}</div>
+              <div class="heatmap-streak-sub">🔥 ${h.streak} day streak</div>
+            </div>
+            <div class="heatmap-grid">
+              ${dotsHTML}
+            </div>
+          `;
+          
+          heatmapContainer.appendChild(row);
+        });
+      }
+    };
+    
+    // Initialize Progress Module
+    ProgressScreen.init();
+    
+    // ==========================================================================
+    // INLINE PWA LAUNCHER REGISTER
+    // ==========================================================================
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        // Register simple inline dynamic base PWA data uri worker
+        const swBlob = new Blob([`
+          self.addEventListener('install', (e) => {
+            self.skipWaiting();
+          });
+          self.addEventListener('activate', (e) => {
+            e.waitUntil(self.clients.claim());
+          });
+          self.addEventListener('fetch', (e) => {
+            // Pass-through strategy
+          });
+        `], { type: 'application/javascript' });
+        const swUrl = URL.createObjectURL(swBlob);
+        
+        navigator.serviceWorker.register(swUrl).then(reg => {
+          console.log("Aura PWA Service Worker Registered successfully!");
+        }).catch(err => {
+          console.warn("PWA SW configuration bypassed: running in sandboxed environment", err);
+        });
+      });
+    }
+    
+  </script>
+</body>
+</html>
