@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, height=device-height, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta name="theme-color" content="#0a0a0f">
   
   <!-- SEO Tags -->
@@ -176,7 +176,7 @@
       height: 100%;
       overflow-y: auto;
       overflow-x: hidden;
-      padding: calc(var(--safe-top) + 20px) 20px calc(80px + var(--safe-bottom)) 20px;
+      padding: calc(var(--safe-top) + 20px) 20px calc(64px + 2 * env(safe-area-inset-bottom) + 20px) 20px;
       box-sizing: border-box;
       opacity: 0;
       transform: translateY(15px);
@@ -313,8 +313,8 @@
       bottom: 0;
       left: 0;
       width: 100%;
-      height: calc(64px + var(--safe-bottom));
-      padding-bottom: var(--safe-bottom);
+      height: calc(64px + env(safe-area-inset-bottom));
+      padding-bottom: env(safe-area-inset-bottom);
       background: rgba(10, 10, 15, 0.7);
       backdrop-filter: var(--glass-blur);
       -webkit-backdrop-filter: var(--webkit-glass-blur);
