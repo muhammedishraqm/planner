@@ -219,7 +219,8 @@
     /* Staggered entry animation */
     .stagger-item {
       opacity: 0;
-      transform: translateY(20px);
+      transform: translate3d(0, 20px, 0);
+      will-change: transform, opacity;
     }
     
     .active .stagger-item {
@@ -229,7 +230,7 @@
     @keyframes staggerUp {
       to {
         opacity: 1;
-        transform: translateY(0);
+        transform: translate3d(0, 0, 0);
       }
     }
     
@@ -2484,7 +2485,7 @@
               translate = startTranslate + deltaX * 0.35;
             }
             
-            swipeTrack.style.transform = `translateX(${translate}px)`;
+            swipeTrack.style.transform = `translate3d(${translate}px, 0, 0)`;
           }
         }, { passive: false });
         
@@ -2530,7 +2531,7 @@
         if (!swipeTrack) return;
         
         const targetPercent = -this.activeIndex * 25; // 25% shift per screen
-        swipeTrack.style.transform = `translateX(${targetPercent}%)`;
+        swipeTrack.style.transform = `translate3d(${targetPercent}%, 0, 0)`;
         
         this.updateActiveScreen();
         this.updateFABVisibility();
@@ -2832,7 +2833,7 @@
           if (isSwiping && deltaX < 0) {
             // Apply elastic tension drag formula
             const friction = Math.max(deltaX, -160);
-            cardElement.style.transform = `translateX(${friction}px)`;
+            cardElement.style.transform = `translate3d(${friction}px, 0, 0)`;
           }
         }, { passive: false });
         
@@ -2841,14 +2842,14 @@
           
           if (isSwiping && deltaX < -84) {
             // Complete drag deletion
-            cardElement.style.transform = 'translateX(-105%)';
+            cardElement.style.transform = 'translate3d(-105%, 0, 0)';
             cardWrapper.classList.add('collapsing');
             setTimeout(() => {
               deleteCallback();
             }, 400);
           } else {
             // Elastic recoil snap-back
-            cardElement.style.transform = 'translateX(0)';
+            cardElement.style.transform = 'translate3d(0, 0, 0)';
             if (deleteZone) {
               setTimeout(() => {
                 deleteZone.style.opacity = '0';
@@ -2879,7 +2880,7 @@
             
             if (isSwiping && deltaX < 0) {
               const friction = Math.max(deltaX, -160);
-              cardElement.style.transform = `translateX(${friction}px)`;
+              cardElement.style.transform = `translate3d(${friction}px, 0, 0)`;
             }
           };
           
@@ -2890,13 +2891,13 @@
             cardElement.style.transition = 'transform 0.35s cubic-bezier(0.25, 1, 0.5, 1)';
             
             if (isSwiping && deltaX < -84) {
-              cardElement.style.transform = 'translateX(-105%)';
+              cardElement.style.transform = 'translate3d(-105%, 0, 0)';
               cardWrapper.classList.add('collapsing');
               setTimeout(() => {
                 deleteCallback();
               }, 400);
             } else {
-              cardElement.style.transform = 'translateX(0)';
+              cardElement.style.transform = 'translate3d(0, 0, 0)';
               if (deleteZone) {
                 setTimeout(() => {
                   deleteZone.style.opacity = '0';
