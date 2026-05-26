@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
   
   <!-- SEO Tags -->
   <title>Aura Planner — Minimalist PWA</title>
@@ -2660,13 +2660,15 @@
         const banner = document.getElementById('permission-banner');
         const grantBtn = document.getElementById('btn-grant-permission');
         
-        if (this.needsPermissionPrompt()) {
+        if (banner && this.needsPermissionPrompt()) {
           banner.style.display = 'flex';
         }
         
-        grantBtn.addEventListener('click', () => {
-          this.requestPermission();
-        });
+        if (grantBtn) {
+          grantBtn.addEventListener('click', () => {
+            this.requestPermission();
+          });
+        }
         
         // Start simple high-precision active reminder check (30 seconds polling)
         setInterval(() => this.pollReminders(), 30000);
@@ -2681,7 +2683,7 @@
         
         Notification.requestPermission().then(permission => {
           const banner = document.getElementById('permission-banner');
-          if (permission === 'granted' || permission === 'denied') {
+          if (banner && (permission === 'granted' || permission === 'denied')) {
             banner.style.opacity = '0';
             setTimeout(() => banner.style.display = 'none', 300);
           }
