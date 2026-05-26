@@ -877,20 +877,336 @@
       background: rgba(255,255,255,0.08);
       border-color: rgba(255,255,255,0.3);
       color: var(--text-primary);
+    }    /* ==========================================================================
+       10. SCREEN 3 DETAILS — STUDY ROADMAP & WEEKLY STRIP
+       ========================================================================== */
+    /* Weekly Calendar Strip on Home Page */
+    .weekly-calendar-strip {
+      display: flex;
+      justify-content: space-between;
+      gap: 8px;
+      margin-bottom: 20px;
+      width: 100%;
     }
     
-    /* ==========================================================================
-       10. SCREEN 3 DETAILS — REMINDERS
-       ========================================================================== */
-    .reminders-list {
+    .calendar-strip-day {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 10px 4px;
+      background: var(--glass-bg);
+      backdrop-filter: var(--glass-blur);
+      -webkit-backdrop-filter: var(--webkit-glass-blur);
+      border: var(--glass-border);
+      border-radius: 16px;
+      gap: 4px;
+      cursor: pointer;
+      transition: all 0.3s cubic-bezier(0.25, 1, 0.5, 1);
+    }
+    
+    .calendar-strip-day.active {
+      background: var(--accent-gradient);
+      border-color: rgba(255, 255, 255, 0.2);
+      box-shadow: 0 8px 24px rgba(109, 40, 217, 0.3);
+    }
+    
+    .calendar-strip-day .day-name {
+      font-size: 9px;
+      font-weight: 700;
+      text-transform: uppercase;
+      color: var(--text-secondary);
+    }
+    
+    .calendar-strip-day.active .day-name {
+      color: rgba(245, 243, 255, 0.7);
+    }
+    
+    .calendar-strip-day .day-num {
+      font-size: 14px;
+      font-weight: 800;
+      color: var(--text-primary);
+    }
+    
+    .calendar-strip-day.active .day-num {
+      color: #ffffff;
+    }
+
+    /* Roadmap Stats Grid */
+    .roadmap-stats-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      margin-bottom: 20px;
+    }
+    
+    .roadmap-stat-card {
+      background: var(--glass-bg);
+      backdrop-filter: var(--glass-blur);
+      -webkit-backdrop-filter: var(--webkit-glass-blur);
+      border: var(--glass-border);
+      border-radius: 20px;
+      padding: 14px 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      box-shadow: var(--glass-shadow);
+    }
+    
+    .roadmap-stat-card .lbl {
+      font-size: 10px;
+      font-weight: 700;
+      color: var(--text-secondary);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    
+    .roadmap-stat-card .val {
+      font-size: 17px;
+      font-weight: 700;
+      color: var(--text-primary);
+    }
+    
+    .roadmap-stat-card .val.highlight {
+      background: var(--accent-gradient);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    /* Today's Focus Box */
+    .focus-box {
+      background: rgba(167, 139, 250, 0.08);
+      border: 1px solid rgba(167, 139, 250, 0.2);
+      border-radius: 24px;
+      padding: 18px;
+      margin-bottom: 20px;
+      box-shadow: var(--glass-shadow);
+    }
+
+    .focus-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 12px;
+    }
+
+    .focus-header .title {
+      font-size: 12px;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: var(--accent-purple);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .focus-list {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .focus-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      background: rgba(255, 255, 255, 0.03);
+      padding: 10px 14px;
+      border-radius: 16px;
+      border: 1px solid rgba(255, 255, 255, 0.05);
+    }
+
+    .focus-item .num-badge {
+      width: 22px;
+      height: 22px;
+      border-radius: 8px;
+      background: var(--accent-gradient);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 11px;
+      font-weight: 700;
+      color: white;
+    }
+
+    .focus-item-details {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    .focus-item-title {
+      font-size: 13.5px;
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+
+    .focus-item-sub {
+      font-size: 11px;
+      color: var(--text-secondary);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    /* Study Phases Step Timeline */
+    .phases-container {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      margin-bottom: 24px;
+      position: relative;
+    }
+
+    .phases-container::before {
+      content: '';
+      position: absolute;
+      left: 27px;
+      top: 24px;
+      bottom: 24px;
+      width: 2px;
+      background: rgba(255, 255, 255, 0.08);
+      z-index: 1;
+    }
+
+    .phase-card {
+      background: var(--glass-bg);
+      backdrop-filter: var(--glass-blur);
+      -webkit-backdrop-filter: var(--webkit-glass-blur);
+      border: var(--glass-border);
+      border-radius: 20px;
+      padding: 14px 16px 14px 54px;
+      position: relative;
+      z-index: 2;
+      box-shadow: var(--glass-shadow);
+      transition: border-color 0.3s ease, background 0.3s ease;
+    }
+
+    .phase-card.active {
+      border-color: rgba(167, 139, 250, 0.3);
+      background: rgba(167, 139, 250, 0.03);
+    }
+
+    .phase-card .step-indicator {
+      position: absolute;
+      left: 16px;
+      top: 14px;
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      background: #10101a;
+      border: 2px solid rgba(255, 255, 255, 0.2);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 10px;
+      font-weight: 700;
+      color: var(--text-secondary);
+      transition: all 0.3s ease;
+    }
+
+    .phase-card.completed .step-indicator {
+      background: var(--success-color);
+      border-color: var(--success-color);
+      color: #0a0a0f;
+    }
+
+    .phase-card.active .step-indicator {
+      background: var(--accent-purple);
+      border-color: var(--accent-purple);
+      color: #0a0a0f;
+      box-shadow: 0 0 12px rgba(167, 139, 250, 0.4);
+    }
+
+    .phase-info {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 6px;
+    }
+
+    .phase-title {
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--text-primary);
+    }
+
+    .phase-meta {
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--text-secondary);
+    }
+
+    .phase-progress-bar {
+      height: 6px;
+      background: rgba(255, 255, 255, 0.06);
+      border-radius: 3px;
+      overflow: hidden;
+    }
+
+    .phase-progress-fill {
+      height: 100%;
+      background: var(--accent-gradient);
+      border-radius: 3px;
+      transition: width 0.5s ease;
+      width: 0%;
+    }
+
+    .phase-card.completed .phase-progress-fill {
+      background: var(--success-color);
+    }
+
+    /* Filters Row Styling */
+    .filter-pills-row {
+      display: flex;
+      gap: 8px;
+      overflow-x: auto;
+      padding-bottom: 8px;
+      margin-bottom: 16px;
+      width: calc(100% + 40px);
+      margin-left: -20px;
+      padding-left: 20px;
+      padding-right: 20px;
+      webkit-overflow-scrolling: touch;
+    }
+
+    .filter-pills-row::-webkit-scrollbar {
+      display: none;
+    }
+
+    .filter-pill {
+      flex: 0 0 auto;
+      background: var(--glass-bg);
+      backdrop-filter: var(--glass-blur);
+      -webkit-backdrop-filter: var(--webkit-glass-blur);
+      border: var(--glass-border);
+      border-radius: 16px;
+      padding: 8px 14px;
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text-secondary);
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+
+    .filter-pill.active {
+      background: var(--text-primary);
+      color: #0a0a0f;
+      border-color: var(--text-primary);
+    }
+
+    /* Checklist Item cards */
+    .roadmap-list {
       display: flex;
       flex-direction: column;
       gap: 12px;
     }
-    
-    .reminder-card {
+
+    .roadmap-item-card {
       position: relative;
-      background: var(--glass-bg);
+      background: rgba(255, 255, 255, 0.06);
       backdrop-filter: var(--glass-blur);
       -webkit-backdrop-filter: var(--webkit-glass-blur);
       border: var(--glass-border);
@@ -898,155 +1214,58 @@
       padding: 18px 20px;
       display: flex;
       align-items: center;
-      justify-content: space-between;
-      gap: 16px;
-      will-change: transform, opacity;
-    }
-    
-    .reminder-left {
-      display: flex;
-      align-items: center;
       gap: 14px;
+      will-change: transform, opacity;
+      cursor: grab;
     }
-    
-    .reminder-bell-wrap {
-      width: 40px;
-      height: 40px;
-      border-radius: 12px;
-      background: rgba(255, 255, 255, 0.05);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      color: var(--text-secondary);
-      transition: color 0.3s ease, background 0.3s ease;
+
+    .roadmap-item-card:active {
+      cursor: grabbing;
     }
-    
-    .reminder-card.active .reminder-bell-wrap {
+
+    .subject-badge {
+      display: inline-block;
+      font-size: 9px;
+      font-weight: 800;
+      padding: 2px 6px;
+      border-radius: 6px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 2px;
+    }
+
+    .subject-badge.math {
+      background: rgba(167, 139, 250, 0.15);
+      color: var(--accent-purple);
+    }
+
+    .subject-badge.physics {
+      background: rgba(59, 130, 246, 0.15);
+      color: #60a5fa;
+    }
+
+    .subject-badge.chemistry {
+      background: rgba(236, 72, 153, 0.15);
+      color: #f472b6;
+    }
+
+    .subject-badge.other {
+      background: rgba(251, 191, 36, 0.15);
       color: var(--streak-amber);
-      background: rgba(251, 191, 36, 0.1);
     }
-    
-    .reminder-bell-wrap.ringing {
-      animation: bellWobble 0.5s ease infinite;
-    }
-    
-    @keyframes bellWobble {
-      0%, 100% { transform: rotate(0); }
-      15% { transform: rotate(-12deg); }
-      30% { transform: rotate(10deg); }
-      45% { transform: rotate(-8deg); }
-      60% { transform: rotate(6deg); }
-      75% { transform: rotate(-4deg); }
-    }
-    
-    .reminder-bell-wrap svg {
-      width: 20px;
-      height: 20px;
-      stroke: currentColor;
-      fill: none;
-    }
-    
-    .reminder-details {
-      display: flex;
-      flex-direction: column;
-      gap: 2px;
-    }
-    
-    .reminder-time {
-      font-size: 20px;
-      font-weight: 700;
-      letter-spacing: -0.5px;
-    }
-    
-    .reminder-label {
-      font-size: 13px;
-      font-weight: 500;
-      color: var(--text-secondary);
-    }
-    
-    /* Modern Switch Toggle */
-    .ios-switch {
-      position: relative;
-      width: 48px;
-      height: 28px;
-      border-radius: 14px;
-      background: rgba(255, 255, 255, 0.12);
-      cursor: pointer;
-      transition: background 0.3s cubic-bezier(0.25, 1, 0.5, 1);
-    }
-    
-    .ios-switch::after {
-      content: '';
-      position: absolute;
-      top: 2px;
-      left: 2px;
-      width: 24px;
-      height: 24px;
-      border-radius: 12px;
-      background: white;
-      box-shadow: 0 2px 4px rgba(0,0,0,0.3);
-      transition: transform 0.3s cubic-bezier(0.25, 1, 0.5, 1);
-      will-change: transform;
-    }
-    
-    .reminder-card.active .ios-switch {
-      background: var(--success-color);
-    }
-    
-    .reminder-card.active .ios-switch::after {
-      transform: translateX(20px);
-    }
-    
-    /* In-App Notifications Friendly Request Prompt */
-    .notif-permission-banner {
-      background: linear-gradient(135deg, rgba(167, 139, 250, 0.12) 0%, rgba(109, 40, 217, 0.12) 100%);
-      border: 1px solid rgba(167, 139, 250, 0.2);
-      border-radius: 24px;
-      padding: 16px 20px;
-      margin-bottom: 20px;
-      display: flex;
-      flex-direction: column;
-      gap: 12px;
-    }
-    
-    .notif-banner-header {
+
+    .roadmap-item-meta {
       display: flex;
       align-items: center;
-      gap: 10px;
-      font-size: 14px;
-      font-weight: 600;
-    }
-    
-    .notif-banner-header svg {
-      width: 18px;
-      height: 18px;
-      stroke: var(--accent-purple);
-    }
-    
-    .notif-banner-desc {
-      font-size: 12.5px;
-      font-weight: 400;
+      gap: 8px;
+      font-size: 11px;
       color: var(--text-secondary);
-      line-height: 1.5;
     }
-    
-    .notif-banner-btn {
-      align-self: flex-start;
-      background: var(--accent-gradient);
-      color: white;
-      border: none;
-      font-family: inherit;
-      font-size: 12px;
+
+    .phase-badge {
       font-weight: 700;
-      padding: 8px 16px;
-      border-radius: 12px;
-      cursor: pointer;
-      box-shadow: 0 4px 12px rgba(109, 40, 217, 0.25);
-      transition: transform 0.2s ease;
-    }
-    
-    .notif-banner-btn:active {
-      transform: scale(0.95);
+      color: var(--accent-purple);
+    });
     }
     
     /* ==========================================================================
@@ -1578,6 +1797,9 @@
           </div>
         </div>
         
+        <!-- Weekly Calendar Strip -->
+        <div class="weekly-calendar-strip stagger-item" id="weekly-calendar-strip"></div>
+        
         <!-- Horizontal Scroll Quick Stats -->
         <div class="stats-strip stagger-item">
           <div class="stat-pill">
@@ -1647,37 +1869,121 @@
         </button>
       </div>
       
-      <!-- SCREEN 3: REMINDERS -->
-      <div id="screen-reminders" class="screen">
+      <!-- SCREEN 3: STUDY ROADMAP -->
+      <div id="screen-roadmap" class="screen">
         <div class="screen-header">
           <div class="header-text">
-            <h1>Never miss a thing ⏰</h1>
-            <p>Your chronological timers</p>
+            <h1>Study Roadmap 🗺️</h1>
+            <p>Plan topics, track progress, and finish on time</p>
           </div>
         </div>
         
-        <!-- Soft Notifications Permission Card -->
-        <div class="notif-permission-banner stagger-item" id="permission-banner" style="display:none;">
-          <div class="notif-banner-header">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
-              <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
-            </svg>
-            <span>Enable Push Reminders</span>
+        <!-- Progress Overview Grid -->
+        <div class="roadmap-stats-grid stagger-item">
+          <div class="roadmap-stat-card">
+            <span class="lbl">Subjects</span>
+            <span class="val highlight" id="roadmap-stat-subjects">0 Subjects</span>
           </div>
-          <div class="notif-banner-desc">
-            Allow system notifications to receive alerts when your timers complete, even in the background.
+          <div class="roadmap-stat-card">
+            <span class="lbl">Completed</span>
+            <span class="val" id="roadmap-stat-completed">0/0 Topics</span>
           </div>
-          <button class="notif-banner-btn" id="btn-grant-permission">Grant Access</button>
+          <div class="roadmap-stat-card">
+            <span class="lbl">Pending</span>
+            <span class="val" id="roadmap-stat-pending">0 Pending</span>
+          </div>
+          <div class="roadmap-stat-card">
+            <span class="lbl">Upcoming Due</span>
+            <span class="val" id="roadmap-stat-deadline">None</span>
+          </div>
         </div>
-        
-        <div class="label-caps stagger-item">
-          <span>Active Reminders</span>
-          <span class="count-badge" id="reminders-count-badge">0</span>
+
+        <!-- Today's Focus Section -->
+        <div class="focus-box stagger-item">
+          <div class="focus-header">
+            <span class="title">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="10"></circle>
+                <line x1="12" y1="8" x2="12" y2="12"></line>
+                <line x1="12" y1="16" x2="12.01" y2="16"></line>
+              </svg>
+              Today's Focus
+            </span>
+          </div>
+          <div class="focus-list" id="roadmap-focus-container">
+            <!-- Dynamically Rendered (Top 3 study tasks) -->
+          </div>
         </div>
-        
-        <div class="reminders-list stagger-item" id="reminders-list-container">
-          <!-- Dynamically Rendered -->
+
+        <!-- Study Phases Roadmap Section -->
+        <div class="stagger-item">
+          <div class="label-caps" style="margin-bottom:12px;">Study Phases</div>
+          <div class="phases-container" id="roadmap-phases-container">
+            <!-- Predefined phases: Foundation, Practice, Revision, Test -->
+            <div class="phase-card active" id="phase-foundation" data-phase="Foundation">
+              <div class="step-indicator">1</div>
+              <div class="phase-info">
+                <span class="phase-title">Foundation</span>
+                <span class="phase-meta" id="phase-meta-foundation">0/0 done</span>
+              </div>
+              <div class="phase-progress-bar">
+                <div class="phase-progress-fill" id="phase-fill-foundation"></div>
+              </div>
+            </div>
+
+            <div class="phase-card" id="phase-practice" data-phase="Practice">
+              <div class="step-indicator">2</div>
+              <div class="phase-info">
+                <span class="phase-title">Practice</span>
+                <span class="phase-meta" id="phase-meta-practice">0/0 done</span>
+              </div>
+              <div class="phase-progress-bar">
+                <div class="phase-progress-fill" id="phase-fill-practice"></div>
+              </div>
+            </div>
+
+            <div class="phase-card" id="phase-revision" data-phase="Revision">
+              <div class="step-indicator">3</div>
+              <div class="phase-info">
+                <span class="phase-title">Revision</span>
+                <span class="phase-meta" id="phase-meta-revision">0/0 done</span>
+              </div>
+              <div class="phase-progress-bar">
+                <div class="phase-progress-fill" id="phase-fill-revision"></div>
+              </div>
+            </div>
+
+            <div class="phase-card" id="phase-test" data-phase="Test">
+              <div class="step-indicator">4</div>
+              <div class="phase-info">
+                <span class="phase-title">Test & Review</span>
+                <span class="phase-meta" id="phase-meta-test">0/0 done</span>
+              </div>
+              <div class="phase-progress-bar">
+                <div class="phase-progress-fill" id="phase-fill-test"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Topic Checklist Header & Filters -->
+        <div class="stagger-item">
+          <div class="label-caps">
+            <span>Topic Checklist</span>
+            <span class="count-badge" id="roadmap-count-badge">0</span>
+          </div>
+
+          <!-- Simple Filters Row -->
+          <div class="filter-pills-row">
+            <div class="filter-pill active" data-filter="all">All</div>
+            <div class="filter-pill" data-filter="pending">Pending</div>
+            <div class="filter-pill" data-filter="completed">Completed</div>
+            <div class="filter-pill" data-filter="high">High Priority</div>
+          </div>
+
+          <div class="roadmap-list" id="roadmap-list-container">
+            <!-- Dynamically Rendered Checklist items -->
+          </div>
         </div>
       </div>
       
@@ -1797,12 +2103,13 @@
         <span>Habits</span>
       </button>
       
-      <button class="nav-item" data-target="screen-reminders">
+      <button class="nav-item" data-target="screen-roadmap">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
-          <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
+          <polygon points="3 6 9 3 15 6 21 3 21 18 15 21 9 18 3 21"></polygon>
+          <line x1="9" y1="3" x2="9" y2="18"></line>
+          <line x1="15" y1="6" x2="15" y2="21"></line>
         </svg>
-        <span>Reminders</span>
+        <span>Roadmap</span>
       </button>
       
       <button class="nav-item" data-target="screen-progress">
@@ -1888,21 +2195,45 @@
       </form>
     </div>
     
-    <!-- 3. ADD REMINDER BOTTOM SHEET -->
-    <div class="bottom-sheet" id="sheet-reminder">
-      <h2 class="sheet-title">Add Alert Reminder</h2>
-      <form id="form-reminder" onsubmit="event.preventDefault();">
+    <!-- 3. ADD STUDY TOPIC BOTTOM SHEET -->
+    <div class="bottom-sheet" id="sheet-roadmap">
+      <h2 class="sheet-title">Add Study Topic</h2>
+      <form id="form-roadmap" onsubmit="event.preventDefault();">
         <div class="form-group">
-          <label class="form-label" for="reminder-input-label">Description</label>
-          <input type="text" class="glass-input" id="reminder-input-label" placeholder="What to remember..." required autocomplete="off">
+          <label class="form-label" for="roadmap-input-subject">Subject Name</label>
+          <input type="text" class="glass-input" id="roadmap-input-subject" placeholder="E.g., Math, Physics, Chemistry" required autocomplete="off">
         </div>
-        
+
         <div class="form-group">
-          <label class="form-label" for="reminder-input-time">Schedule Time</label>
-          <input type="time" class="glass-input" id="reminder-input-time" required>
+          <label class="form-label" for="roadmap-input-topic">Topic Title</label>
+          <input type="text" class="glass-input" id="roadmap-input-topic" placeholder="E.g., Trigonometry, Laws of Motion" required autocomplete="off">
         </div>
-        
-        <button type="submit" class="submit-cta" id="btn-submit-reminder">Set Reminder</button>
+
+        <div class="form-group">
+          <label class="form-label">Phase</label>
+          <div class="pills-selector" id="roadmap-phase-selector">
+            <div class="pill-opt active" data-value="Foundation">Foundation</div>
+            <div class="pill-opt" data-value="Practice">Practice</div>
+            <div class="pill-opt" data-value="Revision">Revision</div>
+            <div class="pill-opt" data-value="Test">Test</div>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Priority</label>
+          <div class="pills-selector" id="roadmap-priority-selector">
+            <div class="pill-opt" data-value="LOW">🟢 Low</div>
+            <div class="pill-opt active" data-value="MEDIUM">🟡 Medium</div>
+            <div class="pill-opt" data-value="HIGH">🔴 High</div>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="roadmap-input-date">Due Date</label>
+          <input type="date" class="glass-input" id="roadmap-input-date" required>
+        </div>
+
+        <button type="submit" class="submit-cta" id="btn-submit-roadmap">Add to Roadmap</button>
       </form>
     </div>
     
@@ -2055,6 +2386,7 @@
         tasks: [],
         habits: [],
         reminders: [],
+        roadmap: [],
         settings: { theme: 'dark' },
         lastOpenedDate: '' // tracks day boundaries
       },
@@ -2073,7 +2405,25 @@
         this.data.tasks = this.data.tasks || [];
         this.data.habits = this.data.habits || [];
         this.data.reminders = this.data.reminders || [];
+        this.data.roadmap = this.data.roadmap || [];
         this.data.settings = this.data.settings || { theme: 'dark' };
+        
+        // Pre-populate sample study roadmap topics if completely empty
+        if (this.data.roadmap.length === 0) {
+          const sampleDate = (daysAhead) => {
+            const d = new Date();
+            d.setDate(d.getDate() + daysAhead);
+            return d.toISOString().split('T')[0];
+          };
+          this.data.roadmap = [
+            { id: 'r1', subject: 'Mathematics', topic: 'Limits & Continuity', phase: 'Foundation', priority: 'HIGH', dueDate: sampleDate(1), completed: true },
+            { id: 'r2', subject: 'Physics', topic: 'Newtonian Mechanics', phase: 'Foundation', priority: 'HIGH', dueDate: sampleDate(2), completed: true },
+            { id: 'r3', subject: 'Chemistry', topic: 'Organic Synthesis', phase: 'Practice', priority: 'MEDIUM', dueDate: sampleDate(4), completed: false },
+            { id: 'r4', subject: 'Mathematics', topic: 'Differential Equations', phase: 'Practice', priority: 'HIGH', dueDate: sampleDate(6), completed: false },
+            { id: 'r5', subject: 'Physics', topic: 'Electrostatics Review', phase: 'Revision', priority: 'LOW', dueDate: sampleDate(8), completed: false },
+            { id: 'r6', subject: 'Chemistry', topic: 'Mock Test Paper 1', phase: 'Test', priority: 'MEDIUM', dueDate: sampleDate(12), completed: false }
+          ];
+        }
         
         this.checkDayBoundary();
         this.save();
@@ -2264,7 +2614,7 @@
         const tab = Nav.activeTab;
         if (tab === 'screen-today') this.openSheet('sheet-task');
         else if (tab === 'screen-habits') this.openSheet('sheet-habit');
-        else if (tab === 'screen-reminders') this.openSheet('sheet-reminder');
+        else if (tab === 'screen-roadmap') this.openSheet('sheet-roadmap');
       },
       
       openSheet(id) {
@@ -2551,6 +2901,9 @@
         const formatted = `${days[now.getDay()]}, ${now.getDate()} ${months[now.getMonth()]}`;
         document.getElementById('today-date-text').textContent = formatted;
         
+        // Render Weekly Calendar strip
+        this.renderWeeklyCalendarStrip();
+        
         // Bind Add Task fields behavior inside sheet
         const priorityOpts = document.querySelectorAll('#task-priority-selector .pill-opt');
         priorityOpts.forEach(opt => {
@@ -2566,7 +2919,8 @@
         });
         
         // Add Task Submit Form
-        document.getElementById('form-task').addEventListener('submit', () => {
+        document.getElementById('form-task').addEventListener('submit', (e) => {
+          e.preventDefault();
           const title = document.getElementById('task-input-title').value.trim();
           const priority = document.querySelector('#task-priority-selector .pill-opt.active').getAttribute('data-value');
           const time = document.getElementById('task-input-time').value;
@@ -2799,6 +3153,37 @@
           ProgressScreen.render();
         }, 400);
       },
+      renderWeeklyCalendarStrip() {
+        const stripContainer = document.getElementById('weekly-calendar-strip');
+        if (!stripContainer) return;
+        
+        stripContainer.innerHTML = '';
+        
+        const now = new Date();
+        const currentDay = now.getDay(); // 0 is Sun, 1 is Mon...
+        const mappedCurrent = currentDay === 0 ? 6 : currentDay - 1; // Mon is 0, Sun is 6
+        
+        const dayLabels = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+        
+        for (let i = 0; i < 7; i++) {
+          const dateDiff = i - mappedCurrent;
+          const targetDate = new Date();
+          targetDate.setDate(now.getDate() + dateDiff);
+          
+          const dayNum = targetDate.getDate();
+          const isActive = i === mappedCurrent;
+          
+          const dayCard = document.createElement('div');
+          dayCard.className = `calendar-strip-day ${isActive ? 'active' : ''}`;
+          
+          dayCard.innerHTML = `
+            <span class="day-name">${dayLabels[i]}</span>
+            <span class="day-num">${dayNum}</span>
+          `;
+          
+          stripContainer.appendChild(dayCard);
+        }
+      },
       
       deleteTask(id) {
         Sounds.playDelete(); // Play satisfying sweeping delete sound!
@@ -2849,7 +3234,8 @@
         });
         
         // Add Habit Submit
-        document.getElementById('form-habit').addEventListener('submit', () => {
+        document.getElementById('form-habit').addEventListener('submit', (e) => {
+          e.preventDefault();
           const name = document.getElementById('habit-input-name').value.trim();
           if (!name) return;
           
@@ -3019,70 +3405,242 @@
     // ==========================================================================
     // SCREEN 3 MODULE: REMINDERS RENDERING & LOGIC
     // ==========================================================================
-    const RemindersScreen = {
+    // ==========================================================================
+    // SCREEN 3 MODULE: STUDY ROADMAP RENDERING & LOGIC
+    // ==========================================================================
+    const RoadmapScreen = {
+      activeFilter: 'all',
+
       init() {
-        // Connect Add Reminder Submit Form
-        document.getElementById('form-reminder').addEventListener('submit', () => {
-          const label = document.getElementById('reminder-input-label').value.trim();
-          const time = document.getElementById('reminder-input-time').value;
-          
-          if (!label || !time) return;
-          
-          const newReminder = {
-            id: Date.now().toString(),
-            label,
-            time,
-            enabled: true
-          };
-          
-          State.data.reminders.push(newReminder);
-          // Sort chronologically
-          State.data.reminders.sort((a,b) => a.time.localeCompare(b.time));
-          
-          State.save();
-          
-          // Reset form fields
-          document.getElementById('reminder-input-label').value = '';
-          document.getElementById('reminder-input-time').value = '';
-          Sheets.closeActiveSheet();
-          
-          this.render();
-          TodayScreen.render();
+        // Bind Add Topic Form fields behavior inside sheet
+        const priorityOpts = document.querySelectorAll('#roadmap-priority-selector .pill-opt');
+        priorityOpts.forEach(opt => {
+          opt.addEventListener('click', () => {
+            priorityOpts.forEach(o => o.classList.remove('active'));
+            opt.classList.add('active');
+          });
         });
-        
+
+        const phaseOpts = document.querySelectorAll('#roadmap-phase-selector .pill-opt');
+        phaseOpts.forEach(opt => {
+          opt.addEventListener('click', () => {
+            phaseOpts.forEach(o => o.classList.remove('active'));
+            opt.classList.add('active');
+          });
+        });
+
+        // Filter Pills toggle action
+        const filterPills = document.querySelectorAll('.filter-pill');
+        filterPills.forEach(pill => {
+          pill.addEventListener('click', () => {
+            filterPills.forEach(p => p.classList.remove('active'));
+            pill.classList.add('active');
+            this.activeFilter = pill.getAttribute('data-filter');
+            this.render();
+          });
+        });
+
+        // Form Submit
+        document.getElementById('form-roadmap').addEventListener('submit', (e) => {
+          e.preventDefault();
+          const subject = document.getElementById('roadmap-input-subject').value.trim();
+          const topic = document.getElementById('roadmap-input-topic').value.trim();
+          const phase = document.querySelector('#roadmap-phase-selector .pill-opt.active').getAttribute('data-value');
+          const priority = document.querySelector('#roadmap-priority-selector .pill-opt.active').getAttribute('data-value');
+          const dueDate = document.getElementById('roadmap-input-date').value;
+
+          if (!subject || !topic || !dueDate) return;
+
+          const newTopic = {
+            id: Date.now().toString(),
+            subject,
+            topic,
+            phase,
+            priority,
+            dueDate,
+            completed: false
+          };
+
+          State.data.roadmap.push(newTopic);
+          State.save();
+
+          // Reset form fields
+          document.getElementById('roadmap-input-subject').value = '';
+          document.getElementById('roadmap-input-topic').value = '';
+          document.getElementById('roadmap-input-date').value = '';
+          
+          Sheets.closeActiveSheet();
+          this.render();
+        });
+
+        // Bind Scroll Parallax to Header blur/scale effect
+        const roadmapScreenContainer = document.getElementById('screen-roadmap');
+        if (roadmapScreenContainer) {
+          roadmapScreenContainer.addEventListener('scroll', () => {
+            const scrollY = roadmapScreenContainer.scrollTop;
+            const header = roadmapScreenContainer.querySelector('.screen-header');
+            if (!header) return;
+            
+            const pct = Math.min(scrollY / 150, 1);
+            header.style.transform = `scale(${1 - (pct * 0.08)}) translateY(${scrollY * 0.25}px)`;
+            header.style.opacity = `${1 - (pct * 0.9)}`;
+            header.style.filter = `blur(${pct * 8}px)`;
+          }, { passive: true });
+        }
+
         this.render();
       },
-      
+
       render() {
-        const list = document.getElementById('reminders-list-container');
-        list.innerHTML = '';
-        
-        const reminders = State.data.reminders;
-        document.getElementById('reminders-count-badge').textContent = reminders.length;
-        
-        if (reminders.length === 0) {
-          list.innerHTML = `
-            <div class="empty-state">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
-                <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
-              </svg>
-              <p>No reminders configured yet. Stay scheduled ⏰</p>
+        const roadmap = State.data.roadmap || [];
+
+        // 1. Calculate & Render Overview Statistics Cards
+        const uniqueSubjects = new Set(roadmap.map(item => item.subject.toLowerCase())).size;
+        const totalTopics = roadmap.length;
+        const completedTopics = roadmap.filter(item => item.completed).length;
+        const pendingTopics = totalTopics - completedTopics;
+
+        // Formulate Next Due Deadline
+        const incompleteItems = roadmap.filter(item => !item.completed);
+        let nextDeadline = 'None';
+        if (incompleteItems.length > 0) {
+          // Sort incomplete items by due date ascending
+          incompleteItems.sort((a, b) => a.dueDate.localeCompare(b.dueDate));
+          const closest = incompleteItems[0];
+          // Format like "May 28"
+          const [yr, mn, dy] = closest.dueDate.split('-');
+          const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+          nextDeadline = `${Number(dy)} ${months[Number(mn) - 1]}`;
+        }
+
+        document.getElementById('roadmap-stat-subjects').textContent = `${uniqueSubjects} Subject${uniqueSubjects === 1 ? '' : 's'}`;
+        document.getElementById('roadmap-stat-completed').textContent = `${completedTopics}/${totalTopics} Done`;
+        document.getElementById('roadmap-stat-pending').textContent = `${pendingTopics} Pending`;
+        document.getElementById('roadmap-stat-deadline').textContent = nextDeadline;
+
+        // 2. Calculate and Render Phase progress bars
+        const phases = ['Foundation', 'Practice', 'Revision', 'Test'];
+        let firstActivePhaseFound = false;
+
+        phases.forEach(phase => {
+          const phaseItems = roadmap.filter(item => item.phase.toLowerCase() === phase.toLowerCase());
+          const phaseTotal = phaseItems.length;
+          const phaseCompleted = phaseItems.filter(item => item.completed).length;
+          
+          const pct = phaseTotal === 0 ? 0 : Math.round((phaseCompleted / phaseTotal) * 100);
+          const metaText = `${phaseCompleted}/${phaseTotal} done`;
+          
+          const metaEl = document.getElementById(`phase-meta-${phase.toLowerCase()}`);
+          const fillEl = document.getElementById(`phase-fill-${phase.toLowerCase()}`);
+          const cardEl = document.getElementById(`phase-${phase.toLowerCase()}`);
+
+          if (metaEl) metaEl.textContent = metaText;
+          if (fillEl) fillEl.style.width = `${pct}%`;
+
+          // Handle Card status classes (completed, active, or default pending)
+          if (cardEl) {
+            cardEl.classList.remove('completed', 'active');
+            if (phaseTotal > 0 && phaseCompleted === phaseTotal) {
+              cardEl.classList.add('completed');
+            } else if (phaseTotal > 0 && !firstActivePhaseFound) {
+              cardEl.classList.add('active');
+              firstActivePhaseFound = true;
+            }
+          }
+        });
+
+        // 3. Render Today's Focus Box (Top 3 study tasks)
+        const focusContainer = document.getElementById('roadmap-focus-container');
+        focusContainer.innerHTML = '';
+
+        // Prioritize: Incomplete -> High priority first -> Medium -> Low -> closest due date
+        const priorityOrder = { 'HIGH': 3, 'MEDIUM': 2, 'LOW': 1 };
+        const sortedIncomplete = [...incompleteItems].sort((a, b) => {
+          const pDiff = priorityOrder[b.priority] - priorityOrder[a.priority];
+          if (pDiff !== 0) return pDiff;
+          return a.dueDate.localeCompare(b.dueDate);
+        });
+
+        const top3Focus = sortedIncomplete.slice(0, 3);
+        if (top3Focus.length === 0) {
+          focusContainer.innerHTML = `
+            <div style="font-size: 13px; color: var(--text-secondary); text-align: center; padding: 10px;">
+              No pending focus topics! Fully caught up! 🎉
             </div>
           `;
-          return;
+        } else {
+          top3Focus.forEach((item, index) => {
+            const div = document.createElement('div');
+            div.className = 'focus-item';
+            div.innerHTML = `
+              <div class="num-badge">${index + 1}</div>
+              <div class="focus-item-details">
+                <span class="focus-item-title">${item.topic}</span>
+                <span class="focus-item-sub">
+                  <span class="subject-badge math" style="margin: 0; padding: 1px 4px; font-size: 8px;">${item.subject}</span>
+                  <span>📅 Due ${item.dueDate}</span>
+                </span>
+              </div>
+            `;
+            focusContainer.appendChild(div);
+          });
         }
-        
-        reminders.forEach(r => {
-          list.appendChild(this.buildReminderCard(r));
+
+        // 4. Render checklist with filters applied
+        const listContainer = document.getElementById('roadmap-list-container');
+        listContainer.innerHTML = '';
+
+        let filteredItems = [...roadmap];
+        if (this.activeFilter === 'pending') {
+          filteredItems = roadmap.filter(item => !item.completed);
+        } else if (this.activeFilter === 'completed') {
+          filteredItems = roadmap.filter(item => item.completed);
+        } else if (this.activeFilter === 'high') {
+          filteredItems = roadmap.filter(item => item.priority === 'HIGH');
+        }
+
+        // Sort: Incomplete first, then by priority, then by due date
+        filteredItems.sort((a, b) => {
+          if (a.completed !== b.completed) return a.completed ? 1 : -1;
+          const pDiff = priorityOrder[b.priority] - priorityOrder[a.priority];
+          if (pDiff !== 0) return pDiff;
+          return a.dueDate.localeCompare(b.dueDate);
         });
+
+        document.getElementById('roadmap-count-badge').textContent = filteredItems.length;
+
+        if (filteredItems.length === 0) {
+          listContainer.innerHTML = `
+            <div class="empty-state">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="10"></circle>
+                <line x1="12" y1="8" x2="12" y2="12"></line>
+                <line x1="12" y1="16" x2="12.01" y2="16"></line>
+              </svg>
+              <p>No study topics match this filter! 📚</p>
+            </div>
+          `;
+        } else {
+          filteredItems.forEach(item => {
+            listContainer.appendChild(this.buildRoadmapItemCard(item));
+          });
+        }
       },
-      
-      buildReminderCard(reminder) {
+
+      buildRoadmapItemCard(item) {
         const wrapper = document.createElement('div');
         wrapper.className = 'task-card-wrapper';
-        wrapper.setAttribute('data-id', reminder.id);
-        
+        wrapper.setAttribute('data-id', item.id);
+
+        const subName = item.subject.toLowerCase();
+        const badgeClass = subName.includes('math') ? 'math' : subName.includes('phys') ? 'physics' : subName.includes('chem') ? 'chemistry' : 'other';
+        const pLabel = item.priority === 'HIGH' ? '🔴 High' : item.priority === 'MEDIUM' ? '🟡 Med' : '🟢 Low';
+        const pClass = `priority-${item.priority.toLowerCase()}`;
+
+        // Format due date elegantly
+        const [yr, mn, dy] = item.dueDate.split('-');
+        const dateFormatted = `${dy}/${mn}`;
+
         wrapper.innerHTML = `
           <div class="swipe-delete-zone">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
@@ -3090,71 +3648,83 @@
               <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
             </svg>
           </div>
-          <div class="reminder-card ${reminder.enabled ? 'active' : ''}">
-            <div class="reminder-left">
-              <div class="reminder-bell-wrap">
-                <svg viewBox="0 0 24 24">
-                  <path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9M13.73 21a2 2 0 0 1-3.46 0"></path>
-                </svg>
+          <div class="roadmap-item-card ${item.completed ? 'completed' : ''}">
+            <div class="checkbox-trigger">
+              <svg class="checkbox-svg" viewBox="0 0 22 22">
+                <circle class="checkbox-circle" cx="11" cy="11" r="9.5"></circle>
+                <circle class="checkbox-fill" cx="11" cy="11" r="9.5"></circle>
+                <path class="checkbox-checkmark" d="M6.5 11.5L9.5 14.5L15.5 8"></path>
+              </svg>
+            </div>
+            
+            <div class="task-details">
+              <div>
+                <span class="subject-badge ${badgeClass}">${item.subject}</span>
               </div>
-              <div class="reminder-details">
-                <span class="reminder-time">${this.format12HourTime(reminder.time)}</span>
-                <span class="reminder-label">${reminder.label}</span>
+              <div class="task-title-wrapper">
+                <span class="task-title" style="font-size: 14.5px;">${item.topic}</span>
+                <span class="strikethrough-line"></span>
+              </div>
+              <div class="roadmap-item-meta">
+                <span>Phase: <span class="phase-badge">${item.phase}</span></span>
+                <span>📅 Due ${dateFormatted}</span>
               </div>
             </div>
-            <div class="ios-switch"></div>
+
+            <span class="priority-badge ${pClass}" style="align-self: center;">${pLabel}</span>
           </div>
         `;
-        
-        const card = wrapper.querySelector('.reminder-card');
-        const sw = wrapper.querySelector('.ios-switch');
-        const bell = wrapper.querySelector('.reminder-bell-wrap');
-        
-        // Bind iOS Toggle switch click
-        sw.addEventListener('click', () => {
-          reminder.enabled = !reminder.enabled;
-          State.save();
-          card.classList.toggle('active', reminder.enabled);
-          
-          if (reminder.enabled) {
-            // Trigger bell shaking keyframes wobble
-            bell.classList.add('ringing');
-            setTimeout(() => bell.classList.remove('ringing'), 700);
-            
-            // Soft beep validation sound
-            Notify.playBeepSound();
-          }
-          
-          TodayScreen.render();
+
+        const card = wrapper.querySelector('.roadmap-item-card');
+        const trigger = wrapper.querySelector('.checkbox-trigger');
+
+        // Checkbox completion toggle action
+        trigger.addEventListener('click', (e) => {
+          e.stopPropagation();
+          this.toggleItemComplete(item.id, wrapper);
         });
-        
-        // Bind swipe left deletion
+
+        // Swipe deletion
         SwipeGesture.bindSwipe(card, () => {
-          this.deleteReminder(reminder.id);
+          this.deleteItem(item.id);
         });
-        
+
         return wrapper;
       },
-      
-      deleteReminder(id) {
-        State.data.reminders = State.data.reminders.filter(r => r.id !== id);
+
+      toggleItemComplete(id, cardWrapper) {
+        const item = State.data.roadmap.find(r => r.id === id);
+        if (!item) return;
+
+        item.completed = !item.completed;
+        State.save();
+
+        const card = cardWrapper.querySelector('.roadmap-item-card');
+        card.classList.toggle('completed', item.completed);
+
+        if (item.completed) {
+          Sounds.playSuccess();
+        } else {
+          Sounds.playUncomplete();
+        }
+
+        // Elegant grace compression before shifting layout
+        cardWrapper.classList.add('collapsing');
+        setTimeout(() => {
+          this.render();
+        }, 400);
+      },
+
+      deleteItem(id) {
+        Sounds.playDelete();
+        State.data.roadmap = State.data.roadmap.filter(r => r.id !== id);
         State.save();
         this.render();
-        TodayScreen.render();
-      },
-      
-      format12HourTime(time24) {
-        const [hrsStr, minsStr] = time24.split(':');
-        let hrs = Number(hrsStr);
-        const ampm = hrs >= 12 ? 'PM' : 'AM';
-        hrs = hrs % 12;
-        hrs = hrs ? hrs : 12; // hour '0' should be '12'
-        return `${String(hrs).padStart(2, '0')}:${minsStr} ${ampm}`;
       }
     };
-    
-    // Initialize Reminders Screen
-    RemindersScreen.init();
+
+    // Initialize Roadmap Screen
+    RoadmapScreen.init();
     
     // ==========================================================================
     // SCREEN 4 MODULE: PROGRESS & Heatmaps
