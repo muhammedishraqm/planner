@@ -1209,6 +1209,7 @@
 
     .roadmap-item-card {
       position: relative;
+      z-index: 10;
       background: rgba(255, 255, 255, 0.06);
       backdrop-filter: var(--glass-blur);
       -webkit-backdrop-filter: var(--webkit-glass-blur);
@@ -1268,7 +1269,13 @@
     .phase-badge {
       font-weight: 700;
       color: var(--accent-purple);
-    });
+    }
+
+    .roadmap-item-card.completed .task-title {
+      color: var(--text-secondary);
+    }
+    .roadmap-item-card.completed .strikethrough-line {
+      width: 100%;
     }
     
     /* ==========================================================================
@@ -1911,20 +1918,21 @@
           </div>
         </div>
 
-        <!-- Today's Focus Section -->
+        <!-- Monthly Focus Section -->
         <div class="focus-box stagger-item">
           <div class="focus-header">
             <span class="title">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
-                <circle cx="12" cy="12" r="10"></circle>
-                <line x1="12" y1="8" x2="12" y2="12"></line>
-                <line x1="12" y1="16" x2="12.01" y2="16"></line>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                <line x1="16" y1="2" x2="16" y2="6"></line>
+                <line x1="8" y1="2" x2="8" y2="6"></line>
+                <line x1="3" y1="10" x2="21" y2="10"></line>
               </svg>
-              Today's Focus
+              Monthly Focus
             </span>
           </div>
           <div class="focus-list" id="roadmap-focus-container">
-            <!-- Dynamically Rendered (Top 3 study tasks) -->
+            <!-- Dynamically Rendered (Top 3 study tasks due this month) -->
           </div>
         </div>
 
@@ -3615,36 +3623,54 @@
           }
         });
 
-        // 3. Render Today's Focus Box (Top 3 study tasks)
+        // 3. Render Monthly Focus Box (Top 3 study tasks due in current month)
         const focusContainer = document.getElementById('roadmap-focus-container');
         focusContainer.innerHTML = '';
 
-        // Prioritize: Incomplete -> High priority first -> Medium -> Low -> closest due date
+        const now = new Date();
+        const curYear = now.getFullYear();
+        const curMonth = now.getMonth(); // 0-indexed
+
+        // Filter: Incomplete study tasks due in current month
+        const monthlyIncomplete = incompleteItems.filter(item => {
+          if (!item.dueDate) return false;
+          const [itemYear, itemMonth, itemDay] = item.dueDate.split('-').map(Number);
+          return itemYear === curYear && (itemMonth - 1) === curMonth;
+        });
+
+        // Prioritize: High priority first -> Medium -> Low -> closest due date
         const priorityOrder = { 'HIGH': 3, 'MEDIUM': 2, 'LOW': 1 };
-        const sortedIncomplete = [...incompleteItems].sort((a, b) => {
+        monthlyIncomplete.sort((a, b) => {
           const pDiff = priorityOrder[b.priority] - priorityOrder[a.priority];
           if (pDiff !== 0) return pDiff;
           return a.dueDate.localeCompare(b.dueDate);
         });
 
-        const top3Focus = sortedIncomplete.slice(0, 3);
+        const top3Focus = monthlyIncomplete.slice(0, 3);
         if (top3Focus.length === 0) {
           focusContainer.innerHTML = `
             <div style="font-size: 13px; color: var(--text-secondary); text-align: center; padding: 10px;">
-              No pending focus topics! Fully caught up! 🎉
+              No focus topics due this month!
             </div>
           `;
         } else {
           top3Focus.forEach((item, index) => {
             const div = document.createElement('div');
             div.className = 'focus-item';
+            
+            const subName = item.subject.toLowerCase();
+            const badgeClass = subName.includes('math') ? 'math' : subName.includes('phys') ? 'physics' : subName.includes('chem') ? 'chemistry' : 'other';
+            
+            const [yr, mn, dy] = item.dueDate.split('-');
+            const dateFormatted = `${dy}/${mn}`;
+
             div.innerHTML = `
               <div class="num-badge">${index + 1}</div>
               <div class="focus-item-details">
                 <span class="focus-item-title">${item.topic}</span>
                 <span class="focus-item-sub">
-                  <span class="subject-badge math" style="margin: 0; padding: 1px 4px; font-size: 8px;">${item.subject}</span>
-                  <span>📅 Due ${item.dueDate}</span>
+                  <span class="subject-badge ${badgeClass}" style="margin: 0; padding: 1px 4px; font-size: 8px;">${item.subject}</span>
+                  <span>Due ${dateFormatted}</span>
                 </span>
               </div>
             `;
