@@ -2164,6 +2164,11 @@
         </div>
         
         <div class="form-group">
+          <label class="form-label" for="task-input-date">Date</label>
+          <input type="date" class="glass-input" id="task-input-date" required>
+        </div>
+        
+        <div class="form-group">
           <label class="form-label" for="task-input-time">Time (Optional)</label>
           <input type="time" class="glass-input" id="task-input-time">
         </div>
@@ -2629,6 +2634,12 @@
         sheet.classList.add('active');
         this.activeSheet = sheet;
         
+        // Pre-populate date input for sheet-task
+        if (id === 'sheet-task' && TodayScreen && TodayScreen.selectedDate) {
+          const dateInput = document.getElementById('task-input-date');
+          if (dateInput) dateInput.value = TodayScreen.selectedDate;
+        }
+        
         // Autofocus first text input inside the sheet
         const textInput = sheet.querySelector('input[type="text"]');
         if (textInput) {
@@ -2896,14 +2907,14 @@
     // ==========================================================================
     const TodayScreen = {
       isCompletedCollapsed: false,
+      selectedDate: '',
       
       init() {
+        // Initialize selected date
+        this.selectedDate = State.getFormattedDateString(new Date());
+        
         // Build Date display text
-        const days = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
-        const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-        const now = new Date();
-        const formatted = `${days[now.getDay()]}, ${now.getDate()} ${months[now.getMonth()]}`;
-        document.getElementById('today-date-text').textContent = formatted;
+        this.updateHeaderDateText();
         
         // Render Weekly Calendar strip
         this.renderWeeklyCalendarStrip();
@@ -2918,9 +2929,11 @@
         });
         
         const sw = document.getElementById('task-reminder-switch');
-        sw.addEventListener('click', () => {
-          sw.classList.toggle('active');
-        });
+        if (sw) {
+          sw.addEventListener('click', () => {
+            sw.classList.toggle('active');
+          });
+        }
         
         // Add Task Submit Form
         document.getElementById('form-task').addEventListener('submit', (e) => {
@@ -2928,7 +2941,8 @@
           const title = document.getElementById('task-input-title').value.trim();
           const priority = document.querySelector('#task-priority-selector .pill-opt.active').getAttribute('data-value');
           const time = document.getElementById('task-input-time').value;
-          const reminder = sw.classList.contains('active');
+          const date = document.getElementById('task-input-date').value || this.selectedDate;
+          const reminder = sw ? sw.classList.contains('active') : false;
           
           if (!title) return;
           
@@ -2938,7 +2952,7 @@
             priority,
             time,
             done: false,
-            date: State.getFormattedDateString(new Date()),
+            date,
             reminder
           };
           
@@ -2948,7 +2962,7 @@
           // Reset form fields
           document.getElementById('task-input-title').value = '';
           document.getElementById('task-input-time').value = '';
-          sw.classList.remove('active');
+          if (sw) sw.classList.remove('active');
           
           // Close sheet & render
           Sheets.closeActiveSheet();
@@ -2982,7 +2996,7 @@
       },
       
       render() {
-        const todayStr = State.getFormattedDateString(new Date());
+        const todayStr = this.selectedDate || State.getFormattedDateString(new Date());
         // Filter tasks that belong to today
         const tasks = State.data.tasks.filter(t => t.date === todayStr);
         
@@ -3157,6 +3171,26 @@
           ProgressScreen.render();
         }, 400);
       },
+      updateHeaderDateText() {
+        const days = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+        const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+        
+        const dateObj = new Date(this.selectedDate + 'T00:00:00');
+        const formatted = `${days[dateObj.getDay()]}, ${dateObj.getDate()} ${months[dateObj.getMonth()]}`;
+        document.getElementById('today-date-text').textContent = formatted;
+        
+        const todayStr = State.getFormattedDateString(new Date());
+        const greetingEl = document.getElementById('today-greeting');
+        if (greetingEl) {
+          if (this.selectedDate === todayStr) {
+            const hrs = new Date().getHours();
+            greetingEl.textContent = hrs < 12 ? 'Good morning ☀️' : hrs < 18 ? 'Good afternoon 🌤️' : 'Good evening 🌙';
+          } else {
+            greetingEl.textContent = 'Daily Schedule 🗓️';
+          }
+        }
+      },
+
       renderWeeklyCalendarStrip() {
         const stripContainer = document.getElementById('weekly-calendar-strip');
         if (!stripContainer) return;
@@ -3174,8 +3208,9 @@
           const targetDate = new Date();
           targetDate.setDate(now.getDate() + dateDiff);
           
+          const targetStr = State.getFormattedDateString(targetDate);
           const dayNum = targetDate.getDate();
-          const isActive = i === mappedCurrent;
+          const isActive = targetStr === this.selectedDate;
           
           const dayCard = document.createElement('div');
           dayCard.className = `calendar-strip-day ${isActive ? 'active' : ''}`;
@@ -3184,6 +3219,15 @@
             <span class="day-name">${dayLabels[i]}</span>
             <span class="day-num">${dayNum}</span>
           `;
+          
+          dayCard.addEventListener('click', () => {
+            if (this.selectedDate === targetStr) return;
+            this.selectedDate = targetStr;
+            Sounds.playTap();
+            this.updateHeaderDateText();
+            this.renderWeeklyCalendarStrip();
+            this.render();
+          });
           
           stripContainer.appendChild(dayCard);
         }
