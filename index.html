@@ -169,29 +169,29 @@
     }
     
     .screen {
-      position: absolute;
-      top: 0;
-      left: 0;
-      width: 100%;
+      width: 25%; /* exactly 1 viewport width */
       height: 100%;
+      flex-shrink: 0;
       overflow-y: auto;
       overflow-x: hidden;
-      padding: calc(var(--safe-top) + 20px) 20px calc(64px + 2 * env(safe-area-inset-bottom) + 20px) 20px;
+      padding: calc(var(--safe-top) + 20px) 20px calc(var(--safe-bottom) + 20px) 20px;
       box-sizing: border-box;
-      opacity: 0;
-      transform: translateY(15px);
+      opacity: 1;
       pointer-events: none;
-      transition: opacity 0.35s cubic-bezier(0.25, 1, 0.5, 1), 
-                  transform 0.35s cubic-bezier(0.25, 1, 0.5, 1);
       webkit-overflow-scrolling: touch;
-      will-change: opacity, transform;
+      will-change: transform;
     }
     
     .screen.active {
-      opacity: 1;
-      transform: translateY(0);
       pointer-events: auto;
-      z-index: 5;
+    }
+    
+    .swipe-track {
+      display: flex;
+      width: 400%; /* 4 screens side-by-side */
+      height: 100%;
+      will-change: transform;
+      transition: transform 0.35s cubic-bezier(0.32, 0.72, 0, 1);
     }
     
     /* Hide scrollbars but preserve scrolling functionality */
@@ -308,71 +308,7 @@
     /* ==========================================================================
        6. NAVIGATION BAR (BOTTOM TABS)
        ========================================================================== */
-    .bottom-nav {
-      position: absolute;
-      bottom: 0;
-      left: 0;
-      width: 100%;
-      height: calc(64px + env(safe-area-inset-bottom));
-      padding-bottom: env(safe-area-inset-bottom);
-      background: rgba(10, 10, 15, 0.7);
-      backdrop-filter: var(--glass-blur);
-      -webkit-backdrop-filter: var(--webkit-glass-blur);
-      border-top: 1px solid rgba(255, 255, 255, 0.08);
-      display: flex;
-      align-items: center;
-      justify-content: space-around;
-      z-index: 100;
-      box-sizing: border-box;
-    }
-    
-    .nav-item {
-      flex: 1;
-      height: 100%;
-      background: none;
-      border: none;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      color: var(--text-secondary);
-      font-family: inherit;
-      font-size: 10px;
-      font-weight: 600;
-      position: relative;
-      z-index: 102;
-      cursor: pointer;
-      gap: 4px;
-      transition: color 0.3s cubic-bezier(0.25, 1, 0.5, 1);
-    }
-    
-    .nav-item.active {
-      color: var(--text-primary);
-    }
-    
-    .nav-item svg {
-      width: 20px;
-      height: 20px;
-      stroke: currentColor;
-      transition: transform 0.3s cubic-bezier(0.25, 1, 0.5, 1);
-    }
-    
-    .nav-item.active svg {
-      transform: scale(1.1);
-    }
-    
-    /* Active Sliding Pill */
-    .nav-indicator {
-      position: absolute;
-      top: 8px;
-      height: 48px;
-      border-radius: 24px;
-      background: rgba(255, 255, 255, 0.07);
-      border: 1px solid rgba(255, 255, 255, 0.08);
-      transition: all 0.38s cubic-bezier(0.25, 1, 0.5, 1);
-      z-index: 101;
-      pointer-events: none;
-    }
+
     
     /* ==========================================================================
        7. FLOATING ACTION BUTTON (FAB)
@@ -1793,9 +1729,10 @@
     
     <!-- Screen Viewports -->
     <div class="screen-viewport">
-      
-      <!-- SCREEN 1: TODAY (DEFAULT VIEW) -->
-      <div id="screen-today" class="screen active">
+      <div class="swipe-track" id="swipe-track">
+        
+        <!-- SCREEN 1: TODAY (DEFAULT VIEW) -->
+        <div id="screen-today" class="screen active">
         <div class="screen-header">
           <div class="header-text">
             <h1 id="today-greeting">Good morning</h1>
@@ -2118,43 +2055,8 @@
         </div>
       </div>
       
+      </div>
     </div>
-    
-    <!-- Navigation Tabs Bar -->
-    <nav class="bottom-nav">
-      <div class="nav-indicator" id="nav-indicator"></div>
-      
-      <button class="nav-item active" data-target="screen-today">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"></path>
-        </svg>
-        <span>Today</span>
-      </button>
-      
-      <button class="nav-item" data-target="screen-habits">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"></path>
-        </svg>
-        <span>Habits</span>
-      </button>
-      
-      <button class="nav-item" data-target="screen-roadmap">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-          <polygon points="3 6 9 3 15 6 21 3 21 18 15 21 9 18 3 21"></polygon>
-          <line x1="9" y1="3" x2="9" y2="18"></line>
-          <line x1="15" y1="6" x2="15" y2="21"></line>
-        </svg>
-        <span>Roadmap</span>
-      </button>
-      
-      <button class="nav-item" data-target="screen-progress">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M3 3v18h18"></path>
-          <path d="M18.7 8l-5.1 5.2-2.8-2.7L7 14.3"></path>
-        </svg>
-        <span>Progress</span>
-      </button>
-    </nav>
     
     <!-- Floating Action Button (FAB) -->
     <button id="main-fab" aria-label="Add Item">
@@ -2520,66 +2422,141 @@
     // ==========================================================================
     // DYNAMIC INTERACTIVE NAVIGATION CONTROLLER
     // ==========================================================================
-    const Nav = {
-      activeTab: 'screen-today',
+    // ==========================================================================
+    // DYNAMIC INTERACTIVE SWIPE NAVIGATION CONTROLLER (PURE SWIPE, GESTURE-ONLY)
+    // ==========================================================================
+    const SwipeNavigation = {
+      activeIndex: 0,
+      tabs: ['screen-today', 'screen-habits', 'screen-roadmap', 'screen-progress'],
       
       init() {
-        const navBar = document.querySelector('.bottom-nav');
-        const items = document.querySelectorAll('.nav-item');
+        const viewport = document.querySelector('.screen-viewport');
+        const swipeTrack = document.getElementById('swipe-track');
+        if (!viewport || !swipeTrack) return;
         
-        items.forEach(item => {
-          item.addEventListener('click', (e) => {
-            const target = item.getAttribute('data-target');
-            this.switchTab(target, item);
-          });
-        });
+        let startX = 0;
+        let startY = 0;
+        let deltaX = 0;
+        let deltaY = 0;
+        let isSwiping = false;
+        let isDragging = false;
+        let startTranslate = 0;
+        let viewportWidth = 0;
+        
+        viewport.addEventListener('touchstart', (e) => {
+          // If a bottom sheet overlay is active or target is inside forms overlays, ignore swiping
+          if (document.getElementById('sheet-overlay').classList.contains('active')) return;
+          
+          const touch = e.touches[0];
+          startX = touch.clientX;
+          startY = touch.clientY;
+          isSwiping = false;
+          isDragging = true;
+          
+          viewportWidth = viewport.getBoundingClientRect().width;
+          startTranslate = -this.activeIndex * viewportWidth;
+          
+          // Disable dynamic CSS transitions to track touch exactly in real time
+          swipeTrack.style.transition = 'none';
+        }, { passive: true });
+        
+        viewport.addEventListener('touchmove', (e) => {
+          if (!isDragging) return;
+          
+          const touch = e.touches[0];
+          deltaX = touch.clientX - startX;
+          deltaY = touch.clientY - startY;
+          
+          // Flag swipe horizontally if horizontal drag exceeds vertical scroll
+          if (!isSwiping && Math.abs(deltaX) > Math.abs(deltaY) && Math.abs(deltaX) > 8) {
+            isSwiping = true;
+          }
+          
+          if (isSwiping) {
+            // Prevent vertical body scrolling when swiping pages horizontally
+            if (e.cancelable) e.preventDefault();
+            
+            let translate = startTranslate + deltaX;
+            // Apply elastic boundary tension at first and last pages (pull limits)
+            if (this.activeIndex === 0 && deltaX > 0) {
+              translate = startTranslate + deltaX * 0.35;
+            } else if (this.activeIndex === 3 && deltaX < 0) {
+              translate = startTranslate + deltaX * 0.35;
+            }
+            
+            swipeTrack.style.transform = `translateX(${translate}px)`;
+          }
+        }, { passive: false });
+        
+        viewport.addEventListener('touchend', () => {
+          if (!isDragging) return;
+          isDragging = false;
+          
+          // Enable smooth iOS-feel spring transition
+          swipeTrack.style.transition = 'transform 0.35s cubic-bezier(0.32, 0.72, 0, 1)';
+          
+          if (isSwiping) {
+            const previousIndex = this.activeIndex;
+            const threshold = viewportWidth * 0.15; // 15% viewport width swipe threshold
+            
+            if (deltaX < -threshold) {
+              this.activeIndex = Math.min(3, this.activeIndex + 1);
+            } else if (deltaX > threshold) {
+              this.activeIndex = Math.max(0, this.activeIndex - 1);
+            }
+            
+            // Play feedback soft click tap sound if page index shifted
+            if (this.activeIndex !== previousIndex) {
+              Sounds.playTap();
+            }
+          }
+          
+          this.snapToActive();
+          isSwiping = false;
+          deltaX = 0;
+          deltaY = 0;
+        }, { passive: true });
         
         // Initial setup
-        setTimeout(() => this.repositionIndicator(), 100);
-        window.addEventListener('resize', () => this.repositionIndicator());
+        this.updateActiveScreen();
       },
       
-      switchTab(targetId, navButton) {
-        if (this.activeTab === targetId) return;
+      getActiveTab() {
+        return this.tabs[this.activeIndex];
+      },
+      
+      snapToActive() {
+        const swipeTrack = document.getElementById('swipe-track');
+        if (!swipeTrack) return;
         
-        Sounds.playTap(); // Play feedback tap
+        const targetPercent = -this.activeIndex * 25; // 25% shift per screen
+        swipeTrack.style.transform = `translateX(${targetPercent}%)`;
         
-        // Deactivate active items
-        document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
-        document.querySelectorAll('.nav-item').forEach(b => b.classList.remove('active'));
-        
-        // Activate target screen
-        const targetScreen = document.getElementById(targetId);
-        targetScreen.classList.add('active');
-        navButton.classList.add('active');
-        
-        this.activeTab = targetId;
-        this.repositionIndicator();
+        this.updateActiveScreen();
         this.updateFABVisibility();
         
-        // Trigger page-specific animations
-        if (targetId === 'screen-progress') {
+        // Trigger specific page load animations
+        const tab = this.getActiveTab();
+        if (tab === 'screen-progress') {
           ProgressScreen.animateChartOnView();
         }
       },
       
-      repositionIndicator() {
-        const activeBtn = document.querySelector('.nav-item.active');
-        const indicator = document.getElementById('nav-indicator');
-        if (!activeBtn || !indicator) return;
-        
-        const navRect = document.querySelector('.bottom-nav').getBoundingClientRect();
-        const btnRect = activeBtn.getBoundingClientRect();
-        
-        const leftOffset = btnRect.left - navRect.left;
-        indicator.style.width = `${btnRect.width - 24}px`;
-        indicator.style.left = `${leftOffset + 12}px`;
+      updateActiveScreen() {
+        const activeTab = this.getActiveTab();
+        document.querySelectorAll('.screen').forEach(s => {
+          s.classList.remove('active');
+          if (s.id === activeTab) {
+            s.classList.add('active');
+          }
+        });
       },
       
       updateFABVisibility() {
         const fab = document.getElementById('main-fab');
+        if (!fab) return;
         // Hide FAB on Progress screen, show on others
-        if (this.activeTab === 'screen-progress') {
+        if (this.activeIndex === 3) {
           fab.style.opacity = '0';
           fab.style.pointerEvents = 'none';
           fab.style.transform = 'scale(0) translateY(20px)';
@@ -2591,8 +2568,8 @@
       }
     };
     
-    // Initialize Navigation
-    Nav.init();
+    // Initialize Swipe Navigation
+    SwipeNavigation.init();
     
     // ==========================================================================
     // FLOATING ACTION BUTTON (FAB) & BOTTOM SHEETS MANAGER
@@ -2651,7 +2628,7 @@
       },
       
       openSheetByActiveTab() {
-        const tab = Nav.activeTab;
+        const tab = SwipeNavigation.getActiveTab();
         if (tab === 'screen-today') this.openSheet('sheet-task');
         else if (tab === 'screen-habits') this.openSheet('sheet-habit');
         else if (tab === 'screen-roadmap') this.openSheet('sheet-roadmap');
