@@ -903,11 +903,12 @@
     }
     
     .calendar-strip-day {
+      position: relative;
       flex: 1;
       display: flex;
       flex-direction: column;
       align-items: center;
-      padding: 10px 4px;
+      padding: 10px 4px 12px 4px;
       background: var(--glass-bg);
       backdrop-filter: var(--glass-blur);
       -webkit-backdrop-filter: var(--webkit-glass-blur);
@@ -922,6 +923,37 @@
       background: var(--accent-gradient);
       border-color: rgba(255, 255, 255, 0.2);
       box-shadow: 0 8px 24px rgba(109, 40, 217, 0.3);
+    }
+    
+    .calendar-strip-day.today {
+      border: 1.5px solid rgba(167, 139, 250, 0.55);
+      background: rgba(167, 139, 250, 0.12);
+    }
+    
+    .calendar-strip-day.today:not(.active) .day-name {
+      color: var(--accent-purple);
+    }
+    
+    .calendar-strip-day.today:not(.active) .day-num {
+      color: var(--accent-purple);
+      text-shadow: 0 0 10px rgba(167, 139, 250, 0.3);
+    }
+    
+    .calendar-strip-day.today::after {
+      content: '';
+      position: absolute;
+      bottom: 5px;
+      width: 4px;
+      height: 4px;
+      border-radius: 50%;
+      background-color: var(--accent-purple);
+      box-shadow: 0 0 8px var(--accent-purple);
+      transition: background-color 0.3s ease;
+    }
+    
+    .calendar-strip-day.today.active::after {
+      background-color: #ffffff;
+      box-shadow: 0 0 8px #ffffff;
     }
     
     .calendar-strip-day .day-name {
@@ -2517,6 +2549,52 @@
             { id: 'r6', subject: 'Chemistry', topic: 'Mock Test Paper 1', phase: 'Test', priority: 'MEDIUM', dueDate: sampleDate(12), completed: false }
           ];
         }
+
+        // Auto-populate 11-day study schedule starting today as Day 1
+        const today = new Date();
+        const getTargetDateStr = (daysOffset) => {
+          const d = new Date(today);
+          d.setDate(today.getDate() + daysOffset);
+          return d.toISOString().split('T')[0];
+        };
+        
+        const schedule = [
+          { day: 1, tasks: [{ title: 'Finance', priority: 'HIGH' }] },
+          { day: 2, tasks: [{ title: 'OOPS', priority: 'HIGH' }, { title: 'Oops YT', priority: 'MEDIUM' }, { title: 'Py balance', priority: 'MEDIUM' }] },
+          { day: 3, tasks: [{ title: 'Py etc', priority: 'MEDIUM' }, { title: 'YT projects', priority: 'MEDIUM' }, { title: '21 project py 3hr', priority: 'HIGH' }] },
+          { day: 4, tasks: [{ title: '21 project py 5', priority: 'HIGH' }, { title: '21 project py balance', priority: 'MEDIUM' }] },
+          { day: 5, tasks: [{ title: 'IITM PY 1-4', priority: 'HIGH' }, { title: 'IITM PY 5-8', priority: 'HIGH' }, { title: 'Py YT', priority: 'MEDIUM' }] },
+          { day: 6, tasks: [{ title: 'IITM PY 1-8', priority: 'HIGH' }, { title: 'Etc', priority: 'LOW' }] },
+          { day: 7, tasks: [{ title: 'IITM S', priority: 'HIGH' }] },
+          { day: 8, tasks: [{ title: 'IITM M', priority: 'HIGH' }] },
+          { day: 9, tasks: [{ title: 'IITM REV', priority: 'HIGH' }] },
+          { day: 10, tasks: [{ title: 'CS50 AI', priority: 'HIGH' }] },
+          { day: 11, tasks: [{ title: 'KATA', priority: 'MEDIUM' }] }
+        ];
+        
+        let addedAny = false;
+        schedule.forEach(dayItem => {
+          const dateStr = getTargetDateStr(dayItem.day - 1);
+          dayItem.tasks.forEach((task, idx) => {
+            const taskId = `study_day${dayItem.day}_${idx}`;
+            if (!this.data.tasks.some(t => t.id === taskId)) {
+              this.data.tasks.push({
+                id: taskId,
+                title: task.title,
+                priority: task.priority,
+                time: '',
+                done: false,
+                date: dateStr,
+                reminder: false
+              });
+              addedAny = true;
+            }
+          });
+        });
+        
+        if (addedAny) {
+          this.save();
+        }
         
         this.checkDayBoundary();
         this.save();
@@ -2531,12 +2609,20 @@
         const lastStr = this.data.lastOpenedDate;
         
         if (lastStr && lastStr !== todayStr) {
-          // 1. Clear completed tasks status from previous days, move remaining tasks to today
-          this.data.tasks.forEach(t => {
-            if (t.done) {
-              t.done = false; // clear done marker
+          // 1. Roll over incomplete past tasks to today, and archive/remove completed past tasks.
+          // Keep future tasks and today's tasks untouched!
+          this.data.tasks = this.data.tasks.filter(t => {
+            if (t.date < todayStr) {
+              if (t.done) {
+                // Completed past task - archive/remove from active list
+                return false;
+              } else {
+                // Incomplete past task - roll forward to today's active backlog
+                t.date = todayStr;
+                return true;
+              }
             }
-            t.date = todayStr; // shift forward to today
+            return true; // Keep today's and future tasks exactly as they are
           });
           
           // 2. Habit streak miss reset logic:
@@ -3335,11 +3421,13 @@
           targetDate.setDate(now.getDate() + dateDiff);
           
           const targetStr = State.getFormattedDateString(targetDate);
+          const todayStr = State.getFormattedDateString(new Date());
           const dayNum = targetDate.getDate();
           const isActive = targetStr === this.selectedDate;
+          const isToday = targetStr === todayStr;
           
           const dayCard = document.createElement('div');
-          dayCard.className = `calendar-strip-day ${isActive ? 'active' : ''}`;
+          dayCard.className = `calendar-strip-day ${isActive ? 'active' : ''} ${isToday ? 'today' : ''}`;
           
           dayCard.innerHTML = `
             <span class="day-name">${dayLabels[i]}</span>
